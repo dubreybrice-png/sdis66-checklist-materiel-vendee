@@ -406,6 +406,15 @@ function doGet(e) {
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
+function onOpen() {
+  try {
+    setup();
+    ensureVendeeVli_();
+  } catch (e) {
+    Logger.log("Erreur onOpen Vendée: " + e);
+  }
+}
+
 function getAppUrl() {
   return ScriptApp.getService().getUrl();
 }
@@ -476,15 +485,30 @@ function setup() {
   }
 }
 
+function ensureVendeeVli_() {
+  if (SCRIPT_PROP.getProperty("INIT_VENDEE_VLI")) return;
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const conf = ss.getSheetByName(SHEET_NAMES.CONFIG);
+  const inv = ss.getSheetByName(SHEET_NAMES.INVENTORY);
+  const confData = conf ? conf.getDataRange().getValues() : [];
+  const invData = inv ? inv.getDataRange().getValues() : [];
+
+  const confCats = confData.slice(1).map(r => String(r[0] || "").trim()).filter(Boolean);
+  const hasVliOnly = confCats.length > 0 && confCats.every(c => c === VENDEE_VLI_CATEGORY);
+  const hasVliBag = invData.slice(1).some(r => String(r[1] || "").trim() === "VLI 1");
+
+  if (!hasVliOnly || !hasVliBag) {
+    setupVendeeVli_();
+    SCRIPT_PROP.setProperty("INIT_VENDEE_VLI", "1");
+  }
+}
+
 // --- DATA FETCHING (Chargement des données) ---
 function getData() {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     setup(); // S'assure que tout est prêt
-    if (!SCRIPT_PROP.getProperty("INIT_VENDEE_VLI")) {
-      setupVendeeVli_();
-      SCRIPT_PROP.setProperty("INIT_VENDEE_VLI", "1");
-    }
+    ensureVendeeVli_();
     if (!SCRIPT_PROP.getProperty("INIT_V3_CLEANUP")) { cleanupCategories_(ss); SCRIPT_PROP.setProperty("INIT_V3_CLEANUP", "1"); }
     if (!SCRIPT_PROP.getProperty("INIT_V4_REMOVE_DEFAULTS")) { removeAutoDefaultBags_(ss); SCRIPT_PROP.setProperty("INIT_V4_REMOVE_DEFAULTS", "1"); }
     if (!SCRIPT_PROP.getProperty("INIT_V5_ORDER")) { initializeInventoryOrder_(ss); SCRIPT_PROP.setProperty("INIT_V5_ORDER", "1"); }
