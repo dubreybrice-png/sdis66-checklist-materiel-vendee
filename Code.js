@@ -961,8 +961,10 @@ function ensureVendeeVli_() {
   // V4: Mise à jour des DLU corrigées dans les feuilles Contenu
   if (!SCRIPT_PROP.getProperty("INIT_VENDEE_VLI_V4_DLU")) {
     try {
-      refreshVliContentSheets_();
+      // IMPORTANT: poser le flag AVANT refresh pour éviter toute récursion
+      // via invalidateCache_ -> rebuildBootstrapSnapshot_ -> getData -> ensureVendeeVli_
       SCRIPT_PROP.setProperty("INIT_VENDEE_VLI_V4_DLU", "1");
+      refreshVliContentSheets_();
     } catch (e) {
       Logger.log("Erreur migration V4 DLU: " + e);
     }
@@ -987,7 +989,6 @@ function refreshVliContentSheets_() {
   });
   // Recharger FORMS_JSON avec les nouvelles DLU
   if (typeof loadFormStructures === 'function') loadFormStructures();
-  invalidateCache_();
   Logger.log("V4: Feuilles Contenu VLI reconstruites avec DLU corrigées.");
 }
 
