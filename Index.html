@@ -566,7 +566,7 @@
           </div>
         </div>
         <div style="padding:12px 20px; border-top:1px solid var(--border-color); background:var(--section-bg);">
-          <button onclick="submitIntervention()" style="width:100%; background:linear-gradient(135deg,#1976d2,#1565c0); color:#fff; border:none; padding:14px; border-radius:8px; font-size:1.05em; font-weight:600; cursor:pointer;">💾 Enregistrer</button>
+          <button id="inter-submit-btn" onclick="submitIntervention()" style="width:100%; background:linear-gradient(135deg,#1976d2,#1565c0); color:#fff; border:none; padding:14px; border-radius:8px; font-size:1.05em; font-weight:600; cursor:pointer;">💾 Enregistrer</button>
         </div>
       </div>
     </div>
@@ -1696,7 +1696,8 @@
       }
 
       function submitIntervention() {
-        const data = {
+        var btn = document.getElementById('inter-submit-btn');
+        var data = {
           date: document.getElementById('inter-date').value,
           isp: document.getElementById('inter-isp').value.trim(),
           cis: document.getElementById('inter-cis').value.trim(),
@@ -1708,21 +1709,26 @@
           alert('⚠️ Tous les champs sont obligatoires.');
           return;
         }
-        const btn = document.querySelector('#interventionModal button[onclick="submitIntervention()"]');
         if (btn) { btn.disabled = true; btn.textContent = '⏳ Enregistrement...'; }
-        google.script.run.withSuccessHandler(function(r) {
-          if (btn) { btn.disabled = false; btn.textContent = '💾 Enregistrer'; }
-          if (r && r.success) {
-            alert('✅ Intervention enregistrée avec succès.');
-            closeM('interventionModal');
-            if (typeof renderInterventionsTab === 'function') renderInterventionsTab();
-          } else {
-            alert('❌ Erreur: ' + (r ? r.error : 'inconnue'));
-          }
-        }).withFailureHandler(function(err) {
-          if (btn) { btn.disabled = false; btn.textContent = '💾 Enregistrer'; }
-          alert('❌ Erreur: ' + err);
-        }).saveVliIntervention(data);
+        console.log('submitIntervention: envoi data=', JSON.stringify(data));
+        google.script.run
+          .withSuccessHandler(function(r) {
+            console.log('submitIntervention: success=', JSON.stringify(r));
+            if (btn) { btn.disabled = false; btn.textContent = '💾 Enregistrer'; }
+            if (r && r.success) {
+              alert('✅ Intervention enregistrée avec succès.');
+              closeM('interventionModal');
+              if (typeof renderInterventionsTab === 'function') renderInterventionsTab();
+            } else {
+              alert('❌ Erreur: ' + (r ? r.error : 'inconnue'));
+            }
+          })
+          .withFailureHandler(function(err) {
+            console.log('submitIntervention: failure=', err);
+            if (btn) { btn.disabled = false; btn.textContent = '💾 Enregistrer'; }
+            alert('❌ Erreur serveur: ' + (err.message || err));
+          })
+          .saveVliIntervention(data);
       }
 
       function renderInterventionsTab() {
