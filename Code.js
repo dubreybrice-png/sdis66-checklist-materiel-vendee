@@ -979,13 +979,16 @@ function refreshVliContentSheets_() {
     let sheet = ss.getSheetByName(sheetName);
     if (!sheet) sheet = ss.insertSheet(sheetName);
     sheet.clearContents();
-    sheet.appendRow(["Section", "Item", "Type", "Def", "Position"]);
+    const rows = [["Section", "Item", "Type", "Def", "Position"]];
     const form = VENDEE_VLI_FORMS[bagName] || VENDEE_VLI1_FORM;
     form.forEach(sec => {
       (sec.items || []).forEach(it => {
-        sheet.appendRow([sec.section, it.name, it.type, it.def, sec.position || ""]);
+        rows.push([sec.section, it.name, it.type, it.def, sec.position || ""]);
       });
     });
+    if (rows.length > 0) {
+      sheet.getRange(1, 1, rows.length, 5).setValues(rows);
+    }
   });
   // Recharger FORMS_JSON avec les nouvelles DLU
   if (typeof loadFormStructures === 'function') loadFormStructures();
