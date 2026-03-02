@@ -2183,13 +2183,18 @@ function saveVliIntervention(data) {
     if (!data || !data.date || !data.isp || !data.cis || !data.commune || !data.numInter || !data.vli) {
       return { success: false, error: "Tous les champs sont obligatoires." };
     }
-    const sheet = ensureInterventionsSheet_();
-    const horodatage = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm:ss");
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName(INTERVENTIONS_SHEET);
+    if (!sheet) {
+      sheet = ss.insertSheet(INTERVENTIONS_SHEET);
+      sheet.appendRow(["Date", "ISP", "CIS", "Commune", "N_Inter", "VLI", "Horodatage"]);
+      sheet.setFrozenRows(1);
+    }
+    var horodatage = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm:ss");
     sheet.appendRow([data.date, data.isp, data.cis, data.commune, data.numInter, data.vli, horodatage]);
-    invalidateCache_();
     return { success: true };
   } catch (e) {
-    Logger.log("Erreur saveVliIntervention: " + e);
+    Logger.log("Erreur saveVliIntervention: " + e.toString());
     return { success: false, error: e.toString() };
   }
 }
