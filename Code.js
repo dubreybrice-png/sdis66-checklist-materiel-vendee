@@ -902,22 +902,12 @@ function setup() {
 
 function ensureVendeeVli_() {
   if (SCRIPT_PROP.getProperty("INIT_VENDEE_VLI_V2")) return;
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const conf = ss.getSheetByName(SHEET_NAMES.CONFIG);
-  const inv = ss.getSheetByName(SHEET_NAMES.INVENTORY);
-  const confData = conf ? conf.getDataRange().getValues() : [];
-  const invData = inv ? inv.getDataRange().getValues() : [];
-
-  const confCats = confData.slice(1).map(r => String(r[0] || "").trim()).filter(Boolean);
-  const hasVliOnly = confCats.length > 0 && confCats.every(c => c === VENDEE_VLI_CATEGORY);
-  const hasVliBag = invData.slice(1).some(r => String(r[1] || "").trim() === "VLI 1");
-
-  if (!hasVliOnly || !hasVliBag) {
+  try {
     setupVendeeVli_();
+    SCRIPT_PROP.setProperty("INIT_VENDEE_VLI_V2", "1");
+  } catch (e) {
+    Logger.log("Erreur ensureVendeeVli_: " + e);
   }
-  // Toujours regénérer les feuilles Contenu pour les DLU à jour
-  setupVendeeVli_();
-  SCRIPT_PROP.setProperty("INIT_VENDEE_VLI_V2", "1");
 }
 
 // --- DATA FETCHING (Chargement des données) ---
