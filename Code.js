@@ -91,11 +91,11 @@ const VENDEE_VLI1_FORM = [
       makeVliItem_("Paracétamol® IV 500 mg", "30/1/2027", "x1"),
       makeVliItem_("Patch Lidocaïne prilocaïne", "31/10/2026", "x2"),
       makeVliItem_("Glucose 30% 10 ml", "31/7/2026", "x4"),
-      makeVliItem_("Diazépam 10 mg / 2 ml", "31/1/2026", "x2"),
+      makeVliItem_("Diazépam 10 mg / 2 ml", "30/7/2026", "x2"),
       makeVliItem_("Canule rectale", "/", "x1"),
       makeVliItem_("Glucose 5% 20 ml (dilution cordarone pédiatrique)", "31/11/2026", "x2"),
       makeVliItem_("Amiodarone 150 mg / 3 ml", "1/9/2026", "x3"),
-      makeVliItem_("Adrénaline 5 mg / 5 ml", "1/10/2026", "x4"),
+      makeVliItem_("Adrénaline 5 mg / 5 ml", "1/9/2026", "x4"),
       makeVliItem_("Adrénaline 1 mg / 1 ml", "1/10/2026", "x2"),
       makeVliItem_("Paracétamol® lyoc 250 mg", "30/4/2028", "x1"),
       makeVliItem_("Paracétamol® lyoc 500 mg", "30/7/2075", "x1"),
@@ -148,7 +148,7 @@ const VENDEE_VLI1_FORM = [
       makeVliItem_("Dosette Salbutamol enfant 2,5 mg / 2,5 ml", "31/1/2027", "x4"),
       makeVliItem_("Dosette NaCl 0,9% 10 ml", "31/8/2027", "x2"),
       makeVliItem_("Masque aérosol adulte", "1/6/2026", "x1"),
-      makeVliItem_("Masque aérosol enfant", "/", "x1"),
+      makeVliItem_("Masque aérosol enfant", "1/6/2026", "x1"),
       makeVliItem_("Masque chambre inhalation bébé/enfant/adulte", "/", "x1"),
       makeVliItem_("Chambre inhalation", "/", "x1"),
       makeVliItem_("Salbutamol flacon pressurisé", "30/10/2026", "x1"),
@@ -457,7 +457,7 @@ const VENDEE_VLI2_FORM = [
       makeVliItem_("Adrénaline 5 mg / 5 ml", "31/7/2026", "x4"),
       makeVliItem_("Adrénaline 1 mg / 1 ml", "30/10/2026", "x2"),
       makeVliItem_("Paracétamol® lyoc 250 mg", "28/4/2028", "x1"),
-      makeVliItem_("Paracétamol® lyoc 500 mg", "31/1/2027", "x1"),
+      makeVliItem_("Paracétamol® lyoc 500 mg", "31/1/2028", "x1"),
       makeVliItem_("EPPI 10 ml", "30/11/2026", "x2")
     ]
   },
@@ -465,7 +465,7 @@ const VENDEE_VLI2_FORM = [
     section: "AMPOULIER STUPÉFIANTS — CÔTÉ ORAMORPH",
     items: [
       makeVliItem_("Ampoule Oramorph 30 mg / 5 ml", "30/5/2027", "x4"),
-      makeVliItem_("Seringue 5 cc", "31/12/2027", "x2"),
+      makeVliItem_("Seringue 5 cc", "28/2/2029", "x2"),
       makeVliItem_("Aiguille à prélèvement", "28/2/2027", "x2"),
       makeVliItem_("Aiguille IV", "28/2/2027", "x2")
     ]
@@ -477,7 +477,7 @@ const VENDEE_VLI2_FORM = [
       makeVliItem_("Ampoule NaCl 0,9% 10 ml", "31/8/2027", "x2"),
       makeVliItem_("Seringue 10 cc", "28/2/2029", "x2"),
       makeVliItem_("Aiguille IV", "28/2/2027", "x2"),
-      makeVliItem_("Aiguille à prélèvement", "30/6/2028", "x2"),
+      makeVliItem_("Aiguille à prélèvement", "30/6/2029", "x2"),
       makeVliItem_("Ampoule Naloxone 0,4 mg / 1 ml", "30/4/2027", "x1")
     ]
   },
@@ -491,7 +491,7 @@ const VENDEE_VLI2_FORM = [
       makeVliItem_("Dosette Dacryosérum", "30/11/2026", "x5"),
       makeVliItem_("NaCl 0,9% dosette 45 ml", "1/2/2028", "x2"),
       makeVliItem_("Paire de ciseaux JESCO", "/", "x1"),
-      makeVliItem_("Pansement américain stérile", "30/11/2027", "x2"),
+      makeVliItem_("Pansement américain stérile", "30/11/2029", "x2"),
       makeVliItem_("Sparadrap", "/", "x1"),
       makeVliItem_("Garrot tourniquet", "/", "x1"),
       makeVliItem_("Bande Tensoban 7 cm", "/", "x1"),
@@ -511,7 +511,7 @@ const VENDEE_VLI2_FORM = [
       makeVliItem_("Masque chambre inhalation bébé/enfant/adulte", "/", "x1"),
       makeVliItem_("Chambre inhalation", "/", "x1"),
       makeVliItem_("Salbutamol flacon pressurisé", "31/3/2027", "x1"),
-      makeVliItem_("Canule de Guédel (petite/moyenne/grande)", "28/2/2025", "x1+1+1"),
+      makeVliItem_("Canule de Guédel (petite/moyenne/grande)", "28/2/2026", "x1+1+1"),
       makeVliItem_("Sonde d'aspiration 8ch & 10ch", "31/8/2029", "x1+1")
     ]
   },
@@ -901,13 +901,47 @@ function setup() {
 }
 
 function ensureVendeeVli_() {
-  if (SCRIPT_PROP.getProperty("INIT_VENDEE_VLI_V3")) return;
-  try {
-    setupVendeeVli_();
-    SCRIPT_PROP.setProperty("INIT_VENDEE_VLI_V3", "1");
-  } catch (e) {
-    Logger.log("Erreur ensureVendeeVli_: " + e);
+  if (!SCRIPT_PROP.getProperty("INIT_VENDEE_VLI_V3")) {
+    try {
+      setupVendeeVli_();
+      SCRIPT_PROP.setProperty("INIT_VENDEE_VLI_V3", "1");
+      SCRIPT_PROP.setProperty("INIT_VENDEE_VLI_V4_DLU", "1");
+    } catch (e) {
+      Logger.log("Erreur ensureVendeeVli_: " + e);
+    }
+    return;
   }
+  // V4: Mise à jour des DLU corrigées dans les feuilles Contenu
+  if (!SCRIPT_PROP.getProperty("INIT_VENDEE_VLI_V4_DLU")) {
+    try {
+      refreshVliContentSheets_();
+      SCRIPT_PROP.setProperty("INIT_VENDEE_VLI_V4_DLU", "1");
+    } catch (e) {
+      Logger.log("Erreur migration V4 DLU: " + e);
+    }
+  }
+}
+
+// Reconstruit les feuilles Contenu VLI avec les DLU du code (sans toucher Inventaire/Config)
+function refreshVliContentSheets_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  VENDEE_VLI_BAGS.forEach(bagName => {
+    const sheetName = "Contenu " + bagName;
+    let sheet = ss.getSheetByName(sheetName);
+    if (!sheet) sheet = ss.insertSheet(sheetName);
+    sheet.clearContents();
+    sheet.appendRow(["Section", "Item", "Type", "Def", "Position"]);
+    const form = VENDEE_VLI_FORMS[bagName] || VENDEE_VLI1_FORM;
+    form.forEach(sec => {
+      (sec.items || []).forEach(it => {
+        sheet.appendRow([sec.section, it.name, it.type, it.def, sec.position || ""]);
+      });
+    });
+  });
+  // Recharger FORMS_JSON avec les nouvelles DLU
+  if (typeof loadFormStructures === 'function') loadFormStructures();
+  invalidateCache_();
+  Logger.log("V4: Feuilles Contenu VLI reconstruites avec DLU corrigées.");
 }
 
 // --- DATA FETCHING (Chargement des données) ---
@@ -1117,6 +1151,36 @@ function saveCheck(bagName, formData, nextItemName, nextItemDate, verifierName, 
   const timeInfo = (verificationTime !== undefined && verificationTime !== null && verificationTime !== "") ? ` [⏱️ ${verificationTime}]` : "";
   
   histSheet.appendRow([now, bagName, verifierName, detailString + timeInfo]);
+
+  // === PERSISTANCE DES DLU : si l'utilisateur modifie une date, elle devient la nouvelle référence ===
+  if (category === VENDEE_VLI_CATEGORY && formData) {
+    try {
+      const contentSheet = ss.getSheetByName("Contenu " + bagName);
+      if (contentSheet && contentSheet.getLastRow() > 1) {
+        const contentData = contentSheet.getRange(2, 1, contentSheet.getLastRow() - 1, 4).getValues();
+        let datesUpdated = false;
+        for (let ci = 0; ci < contentData.length; ci++) {
+          const itemName = contentData[ci][1] ? contentData[ci][1].toString().trim() : "";
+          const currentDef = contentData[ci][3] ? contentData[ci][3].toString().trim() : "";
+          if (formData[itemName] !== undefined && formData[itemName] !== null) {
+            const newVal = formData[itemName].toString().trim();
+            // Ne mettre à jour que si c'est une date valide YYYY-MM-DD et différente de l'actuelle
+            if (newVal && newVal !== currentDef && /^\d{4}-\d{2}-\d{2}$/.test(newVal)) {
+              contentSheet.getRange(ci + 2, 4).setValue(newVal);
+              datesUpdated = true;
+            }
+          }
+        }
+        if (datesUpdated) {
+          // Recharger FORMS_JSON pour que la prochaine vérification ait les nouvelles dates par défaut
+          if (typeof loadFormStructures === 'function') loadFormStructures();
+          Logger.log("DLU mises à jour pour " + bagName);
+        }
+      }
+    } catch (dluErr) {
+      Logger.log("Erreur persistance DLU: " + dluErr);
+    }
+  }
 
   invalidateCache_();
   
