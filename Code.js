@@ -756,6 +756,51 @@ const VENDEE_VLI_FORMS = {
   "VLI 2": VENDEE_VLI2_FORM
 };
 
+const VLI_BASE_DATES_KEY = "VLI_BASE_DATES_V1";
+
+function ensureVliBaseDates_() {
+  let base = {};
+  try {
+    base = JSON.parse(SCRIPT_PROP.getProperty(VLI_BASE_DATES_KEY) || "{}");
+  } catch(e) {
+    base = {};
+  }
+
+  let changed = false;
+  VENDEE_VLI_BAGS.forEach(bagName => {
+    if (!base[bagName]) { base[bagName] = {}; changed = true; }
+    const form = VENDEE_VLI_FORMS[bagName] || [];
+    form.forEach(sec => {
+      (sec.items || []).forEach(it => {
+        if (base[bagName][it.name] === undefined) {
+          base[bagName][it.name] = it.def || "";
+          changed = true;
+        }
+      });
+    });
+  });
+
+  if (changed) SCRIPT_PROP.setProperty(VLI_BASE_DATES_KEY, JSON.stringify(base));
+  return base;
+}
+
+function buildVliFormsWithBaseDates_(base) {
+  const out = {};
+  VENDEE_VLI_BAGS.forEach(bagName => {
+    const form = VENDEE_VLI_FORMS[bagName] || [];
+    out[bagName] = form.map(sec => ({
+      section: sec.section,
+      position: sec.position || "",
+      items: (sec.items || []).map(it => ({
+        name: it.name,
+        type: it.type,
+        def: (base && base[bagName] && base[bagName][it.name] !== undefined) ? base[bagName][it.name] : (it.def || "")
+      }))
+    }));
+  });
+  return out;
+}
+
 // Compatibilité - ancien nom (fallback VLI 1)
 const VENDEE_VLI_FORM = VENDEE_VLI1_FORM;
 
@@ -836,41 +881,11 @@ function getAppUrl() {
 
 // --- BOOTSTRAP (data + photos + mileages) with short cache ---
 function getBootstrapData() {
-  // V8: reconstruction rapide — construit FORMS_JSON directement depuis les constantes (pas de Sheets)
-  if (!SCRIPT_PROP.getProperty("V8_FAST_DLU")) {
-    try {
-      // Construire FORMS_JSON directement depuis VENDEE_VLI_FORMS (pas besoin de lire/écrire les feuilles Contenu)
-      var formsData = {};
-      VENDEE_VLI_BAGS.forEach(function(bagName) {
-        var form = VENDEE_VLI_FORMS[bagName] || VENDEE_VLI1_FORM;
-        formsData[bagName] = form;
-      });
-      SCRIPT_PROP.setProperty("FORMS_JSON", JSON.stringify(formsData));
-      SCRIPT_PROP.deleteProperty(BOOTSTRAP_SNAPSHOT_KEY);
-      CacheService.getScriptCache().remove("BOOTSTRAP_V1");
-      SCRIPT_PROP.setProperty("V8_FAST_DLU", "1");
-      // Reconstruire les feuilles Contenu en batch (en arrière-plan pour les prochains chargements)
-      rebuildContenuSheetsBatch_();
-    } catch(e) {
-      Logger.log("V8 error: " + e);
-      SCRIPT_PROP.setProperty("V8_FAST_DLU", "1");
-    }
-    var payload = rebuildBootstrapSnapshot_();
-    if (payload) CacheService.getScriptCache().put("BOOTSTRAP_V1", JSON.stringify(payload), 5);
-    return payload;
-  }
-
-  var cache = CacheService.getScriptCache();
-  var cached = cache.get("BOOTSTRAP_V1");
+  // Version simple et robuste: cache court uniquement (pas de snapshot persistant)
+  const cache = CacheService.getScriptCache();
+  const cached = cache.get("BOOTSTRAP_V1");
   if (cached) return JSON.parse(cached);
-
-  var snap = SCRIPT_PROP.getProperty(BOOTSTRAP_SNAPSHOT_KEY);
-  if (snap) {
-    cache.put("BOOTSTRAP_V1", snap, 5);
-    return JSON.parse(snap);
-  }
-
-  var payload = rebuildBootstrapSnapshot_();
+  const payload = rebuildBootstrapSnapshot_();
   if (payload) cache.put("BOOTSTRAP_V1", JSON.stringify(payload), 5);
   return payload;
 }
@@ -907,7 +922,6 @@ function rebuildBootstrapSnapshot_() {
     photoPresence: getPhotoPresenceMap(),
     vliMileages: getAllVliMileages()
   };
-  SCRIPT_PROP.setProperty(BOOTSTRAP_SNAPSHOT_KEY, JSON.stringify(payload));
   return payload;
 }
 
@@ -952,21 +966,8 @@ function ensureVendeeVli_() {
     try {
       setupVendeeVli_();
       SCRIPT_PROP.setProperty("INIT_VENDEE_VLI_V3", "1");
-      SCRIPT_PROP.setProperty("INIT_VENDEE_VLI_V4_DLU", "1");
     } catch (e) {
       Logger.log("Erreur ensureVendeeVli_: " + e);
-    }
-    return;
-  }
-  // V4: Mise à jour des DLU corrigées dans les feuilles Contenu
-  if (!SCRIPT_PROP.getProperty("INIT_VENDEE_VLI_V4_DLU")) {
-    try {
-      // IMPORTANT: poser le flag AVANT refresh pour éviter toute récursion
-      // via invalidateCache_ -> rebuildBootstrapSnapshot_ -> getData -> ensureVendeeVli_
-      SCRIPT_PROP.setProperty("INIT_VENDEE_VLI_V4_DLU", "1");
-      refreshVliContentSheets_();
-    } catch (e) {
-      Logger.log("Erreur migration V4 DLU: " + e);
     }
   }
 }
@@ -1062,6 +1063,11 @@ function getData() {
     let forms = {};
     const savedForms = SCRIPT_PROP.getProperty("FORMS_JSON");
     if (savedForms) forms = JSON.parse(savedForms);
+    // VLI: source de vérité = constantes + overrides persistés
+    const vliBaseDates = ensureVliBaseDates_();
+    const vliForms = buildVliFormsWithBaseDates_(vliBaseDates);
+    forms["VLI 1"] = vliForms["VLI 1"];
+    forms["VLI 2"] = vliForms["VLI 2"];
     
     // 4. Historique
     const histSheet = ss.getSheetByName(SHEET_NAMES.HISTORY);
@@ -1203,30 +1209,22 @@ function saveCheck(bagName, formData, nextItemName, nextItemDate, verifierName, 
   
   histSheet.appendRow([now, bagName, verifierName, detailString + timeInfo]);
 
-  // === PERSISTANCE DES DLU : si l'utilisateur modifie une date, elle devient la nouvelle référence ===
+  // === PERSISTANCE DES DLU : VLI_BASE_DATES devient la source de référence ===
   if (category === VENDEE_VLI_CATEGORY && formData) {
     try {
-      const contentSheet = ss.getSheetByName("Contenu " + bagName);
-      if (contentSheet && contentSheet.getLastRow() > 1) {
-        const contentData = contentSheet.getRange(2, 1, contentSheet.getLastRow() - 1, 4).getValues();
-        let datesUpdated = false;
-        for (let ci = 0; ci < contentData.length; ci++) {
-          const itemName = contentData[ci][1] ? contentData[ci][1].toString().trim() : "";
-          const currentDef = contentData[ci][3] ? contentData[ci][3].toString().trim() : "";
-          if (formData[itemName] !== undefined && formData[itemName] !== null) {
-            const newVal = formData[itemName].toString().trim();
-            // Ne mettre à jour que si c'est une date valide YYYY-MM-DD et différente de l'actuelle
-            if (newVal && newVal !== currentDef && /^\d{4}-\d{2}-\d{2}$/.test(newVal)) {
-              contentSheet.getRange(ci + 2, 4).setValue(newVal);
-              datesUpdated = true;
-            }
-          }
+      const base = ensureVliBaseDates_();
+      if (!base[bagName]) base[bagName] = {};
+      let datesUpdated = false;
+      Object.keys(formData).forEach(itemName => {
+        const newVal = (formData[itemName] || "").toString().trim();
+        if (/^\d{4}-\d{2}-\d{2}$/.test(newVal) && base[bagName][itemName] !== newVal) {
+          base[bagName][itemName] = newVal;
+          datesUpdated = true;
         }
-        if (datesUpdated) {
-          // Recharger FORMS_JSON pour que la prochaine vérification ait les nouvelles dates par défaut
-          if (typeof loadFormStructures === 'function') loadFormStructures();
-          Logger.log("DLU mises à jour pour " + bagName);
-        }
+      });
+      if (datesUpdated) {
+        SCRIPT_PROP.setProperty(VLI_BASE_DATES_KEY, JSON.stringify(base));
+        Logger.log("DLU mises à jour pour " + bagName + " (" + Object.keys(formData).length + " items analysés)");
       }
     } catch (dluErr) {
       Logger.log("Erreur persistance DLU: " + dluErr);
