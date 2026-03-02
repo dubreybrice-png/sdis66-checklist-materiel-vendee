@@ -2204,15 +2204,19 @@ function getVliInterventions() {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = ss.getSheetByName(INTERVENTIONS_SHEET);
     if (!sheet || sheet.getLastRow() < 2) return [];
+    const tz = Session.getScriptTimeZone();
     const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 7).getValues();
     return data.map(r => ({
-      date: r[0] ? Utilities.formatDate(new Date(r[0]), Session.getScriptTimeZone(), "dd/MM/yyyy") : String(r[0]),
-      isp: r[1],
-      cis: r[2],
-      commune: r[3],
-      numInter: r[4],
-      vli: r[5],
-      horodatage: r[6]
+      date: r[0] instanceof Date ? Utilities.formatDate(r[0], tz, "dd/MM/yyyy")
+           : r[0] ? Utilities.formatDate(new Date(r[0]), tz, "dd/MM/yyyy")
+           : "",
+      isp: String(r[1] || ""),
+      cis: String(r[2] || ""),
+      commune: String(r[3] || ""),
+      numInter: String(r[4] || ""),
+      vli: String(r[5] || ""),
+      horodatage: r[6] instanceof Date ? Utilities.formatDate(r[6], tz, "dd/MM/yyyy HH:mm:ss")
+                : String(r[6] || "")
     })).reverse();
   } catch (e) {
     Logger.log("Erreur getVliInterventions: " + e);
