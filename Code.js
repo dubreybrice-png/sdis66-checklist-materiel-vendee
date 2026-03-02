@@ -836,6 +836,19 @@ function getAppUrl() {
 
 // --- BOOTSTRAP (data + photos + mileages) with short cache ---
 function getBootstrapData() {
+  // V6: forcer la reconstruction complète si les dates n'ont pas encore été corrigées
+  if (!SCRIPT_PROP.getProperty("BOOTSTRAP_V6_DLU_FIX")) {
+    // Recharger les formulaires avec les bonnes dates
+    if (typeof loadFormStructures === 'function') loadFormStructures();
+    // Supprimer l'ancien snapshot et reconstruire
+    SCRIPT_PROP.deleteProperty(BOOTSTRAP_SNAPSHOT_KEY);
+    CacheService.getScriptCache().remove("BOOTSTRAP_V1");
+    SCRIPT_PROP.setProperty("BOOTSTRAP_V6_DLU_FIX", "1");
+    const payload = rebuildBootstrapSnapshot_();
+    if (payload) CacheService.getScriptCache().put("BOOTSTRAP_V1", JSON.stringify(payload), 5);
+    return payload;
+  }
+
   const cache = CacheService.getScriptCache();
   const cached = cache.get("BOOTSTRAP_V1");
   if (cached) return JSON.parse(cached);

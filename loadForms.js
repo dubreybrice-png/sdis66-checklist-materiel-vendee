@@ -49,8 +49,11 @@ function loadFormStructures() {
   // Sauvegarder
   const prop = PropertiesService.getScriptProperties();
   prop.setProperty("FORMS_JSON", JSON.stringify(formsData));
+  // Invalider le snapshot bootstrap pour forcer la reconstruction avec les nouvelles dates
+  prop.deleteProperty("BOOTSTRAP_SNAPSHOT_V1");
+  try { CacheService.getScriptCache().remove("BOOTSTRAP_V1"); } catch(e) {}
   
-  Logger.log("Formulaires chargés: " + JSON.stringify(formsData, null, 2));
+  Logger.log("Formulaires chargés: " + Object.keys(formsData).join(", "));
   return formsData;
 }
 
