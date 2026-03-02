@@ -901,10 +901,10 @@ function setup() {
 }
 
 function ensureVendeeVli_() {
-  if (SCRIPT_PROP.getProperty("INIT_VENDEE_VLI_V2")) return;
+  if (SCRIPT_PROP.getProperty("INIT_VENDEE_VLI_V3")) return;
   try {
     setupVendeeVli_();
-    SCRIPT_PROP.setProperty("INIT_VENDEE_VLI_V2", "1");
+    SCRIPT_PROP.setProperty("INIT_VENDEE_VLI_V3", "1");
   } catch (e) {
     Logger.log("Erreur ensureVendeeVli_: " + e);
   }

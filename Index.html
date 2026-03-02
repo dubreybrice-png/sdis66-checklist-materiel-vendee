@@ -1708,20 +1708,19 @@
           alert('⚠️ Tous les champs sont obligatoires.');
           return;
         }
-        const btn = event.target;
-        btn.disabled = true; btn.textContent = '⏳ Enregistrement...';
-        google.script.run.withSuccessHandler(r => {
-          btn.disabled = false; btn.textContent = '💾 Enregistrer';
+        const btn = document.querySelector('#interventionModal button[onclick="submitIntervention()"]');
+        if (btn) { btn.disabled = true; btn.textContent = '⏳ Enregistrement...'; }
+        google.script.run.withSuccessHandler(function(r) {
+          if (btn) { btn.disabled = false; btn.textContent = '💾 Enregistrer'; }
           if (r && r.success) {
             alert('✅ Intervention enregistrée avec succès.');
             closeM('interventionModal');
-            // Rafraîchir la table admin si visible
             if (typeof renderInterventionsTab === 'function') renderInterventionsTab();
           } else {
             alert('❌ Erreur: ' + (r ? r.error : 'inconnue'));
           }
-        }).withFailureHandler(err => {
-          btn.disabled = false; btn.textContent = '💾 Enregistrer';
+        }).withFailureHandler(function(err) {
+          if (btn) { btn.disabled = false; btn.textContent = '💾 Enregistrer'; }
           alert('❌ Erreur: ' + err);
         }).saveVliIntervention(data);
       }
