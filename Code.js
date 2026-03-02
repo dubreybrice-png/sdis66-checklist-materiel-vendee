@@ -836,14 +836,47 @@ function getAppUrl() {
 
 // --- BOOTSTRAP (data + photos + mileages) with short cache ---
 function getBootstrapData() {
-  // V6: forcer la reconstruction complète si les dates n'ont pas encore été corrigées
-  if (!SCRIPT_PROP.getProperty("BOOTSTRAP_V6_DLU_FIX")) {
-    // Recharger les formulaires avec les bonnes dates
-    if (typeof loadFormStructures === 'function') loadFormStructures();
-    // Supprimer l'ancien snapshot et reconstruire
+  // V7: Nuke complet — supprimer TOUS les anciens flags et caches pour forcer une reconstruction propre
+  if (!SCRIPT_PROP.getProperty("V7_FULL_RESET")) {
+    SCRIPT_PROP.deleteProperty("FORMS_JSON");
+    SCRIPT_PROP.deleteProperty("FORMS_V5_DATE_FIX");
+    SCRIPT_PROP.deleteProperty("BOOTSTRAP_V6_DLU_FIX");
+    SCRIPT_PROP.deleteProperty("INIT_VENDEE_VLI_V4_DLU");
     SCRIPT_PROP.deleteProperty(BOOTSTRAP_SNAPSHOT_KEY);
-    CacheService.getScriptCache().remove("BOOTSTRAP_V1");
+    try { CacheService.getScriptCache().remove("BOOTSTRAP_V1"); } catch(e) {}
+    SCRIPT_PROP.setProperty("V7_FULL_RESET", "1");
+    // Ne pas return ici — tomber dans le bloc V6 ci-dessous
+  }
+
+  // Reconstruction : recharger les feuilles Contenu, puis FORMS_JSON, puis snapshot
+  if (!SCRIPT_PROP.getProperty("BOOTSTRAP_V6_DLU_FIX")) {
+    // 1. Reconstruire les feuilles Contenu VLI depuis les constantes du code
+    try {
+      const ss = SpreadsheetApp.getActiveSpreadsheet();
+      VENDEE_VLI_BAGS.forEach(bagName => {
+        const sheetName = "Contenu " + bagName;
+        let sheet = ss.getSheetByName(sheetName);
+        if (!sheet) sheet = ss.insertSheet(sheetName);
+        sheet.clearContents();
+        sheet.appendRow(["Section", "Item", "Type", "Def", "Position"]);
+        const form = VENDEE_VLI_FORMS[bagName] || VENDEE_VLI1_FORM;
+        form.forEach(sec => {
+          (sec.items || []).forEach(it => {
+            sheet.appendRow([sec.section, it.name, it.type, it.def, sec.position || ""]);
+          });
+        });
+      });
+    } catch(e) { Logger.log("V7 rebuild Contenu error: " + e); }
+
+    // 2. Recharger FORMS_JSON depuis les feuilles (avec le fix Date)
+    if (typeof loadFormStructures === 'function') loadFormStructures();
+
+    // 3. Marquer comme fait et reconstruire le snapshot
+    SCRIPT_PROP.deleteProperty(BOOTSTRAP_SNAPSHOT_KEY);
+    try { CacheService.getScriptCache().remove("BOOTSTRAP_V1"); } catch(e) {}
     SCRIPT_PROP.setProperty("BOOTSTRAP_V6_DLU_FIX", "1");
+    SCRIPT_PROP.setProperty("INIT_VENDEE_VLI_V4_DLU", "1");
+    SCRIPT_PROP.setProperty("FORMS_V5_DATE_FIX", "1");
     const payload = rebuildBootstrapSnapshot_();
     if (payload) CacheService.getScriptCache().put("BOOTSTRAP_V1", JSON.stringify(payload), 5);
     return payload;
