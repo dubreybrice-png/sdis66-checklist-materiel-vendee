@@ -836,65 +836,66 @@ function getAppUrl() {
 
 // --- BOOTSTRAP (data + photos + mileages) with short cache ---
 function getBootstrapData() {
-  // V7: Nuke complet — supprimer TOUS les anciens flags et caches pour forcer une reconstruction propre
-  if (!SCRIPT_PROP.getProperty("V7_FULL_RESET")) {
-    SCRIPT_PROP.deleteProperty("FORMS_JSON");
-    SCRIPT_PROP.deleteProperty("FORMS_V5_DATE_FIX");
-    SCRIPT_PROP.deleteProperty("BOOTSTRAP_V6_DLU_FIX");
-    SCRIPT_PROP.deleteProperty("INIT_VENDEE_VLI_V4_DLU");
-    SCRIPT_PROP.deleteProperty(BOOTSTRAP_SNAPSHOT_KEY);
-    try { CacheService.getScriptCache().remove("BOOTSTRAP_V1"); } catch(e) {}
-    SCRIPT_PROP.setProperty("V7_FULL_RESET", "1");
-    // Ne pas return ici — tomber dans le bloc V6 ci-dessous
-  }
-
-  // Reconstruction : recharger les feuilles Contenu, puis FORMS_JSON, puis snapshot
-  if (!SCRIPT_PROP.getProperty("BOOTSTRAP_V6_DLU_FIX")) {
-    // 1. Reconstruire les feuilles Contenu VLI depuis les constantes du code
+  // V8: reconstruction rapide — construit FORMS_JSON directement depuis les constantes (pas de Sheets)
+  if (!SCRIPT_PROP.getProperty("V8_FAST_DLU")) {
     try {
-      const ss = SpreadsheetApp.getActiveSpreadsheet();
-      VENDEE_VLI_BAGS.forEach(bagName => {
-        const sheetName = "Contenu " + bagName;
-        let sheet = ss.getSheetByName(sheetName);
-        if (!sheet) sheet = ss.insertSheet(sheetName);
-        sheet.clearContents();
-        sheet.appendRow(["Section", "Item", "Type", "Def", "Position"]);
-        const form = VENDEE_VLI_FORMS[bagName] || VENDEE_VLI1_FORM;
-        form.forEach(sec => {
-          (sec.items || []).forEach(it => {
-            sheet.appendRow([sec.section, it.name, it.type, it.def, sec.position || ""]);
-          });
-        });
+      // Construire FORMS_JSON directement depuis VENDEE_VLI_FORMS (pas besoin de lire/écrire les feuilles Contenu)
+      var formsData = {};
+      VENDEE_VLI_BAGS.forEach(function(bagName) {
+        var form = VENDEE_VLI_FORMS[bagName] || VENDEE_VLI1_FORM;
+        formsData[bagName] = form;
       });
-    } catch(e) { Logger.log("V7 rebuild Contenu error: " + e); }
-
-    // 2. Recharger FORMS_JSON depuis les feuilles (avec le fix Date)
-    if (typeof loadFormStructures === 'function') loadFormStructures();
-
-    // 3. Marquer comme fait et reconstruire le snapshot
-    SCRIPT_PROP.deleteProperty(BOOTSTRAP_SNAPSHOT_KEY);
-    try { CacheService.getScriptCache().remove("BOOTSTRAP_V1"); } catch(e) {}
-    SCRIPT_PROP.setProperty("BOOTSTRAP_V6_DLU_FIX", "1");
-    SCRIPT_PROP.setProperty("INIT_VENDEE_VLI_V4_DLU", "1");
-    SCRIPT_PROP.setProperty("FORMS_V5_DATE_FIX", "1");
-    const payload = rebuildBootstrapSnapshot_();
+      SCRIPT_PROP.setProperty("FORMS_JSON", JSON.stringify(formsData));
+      SCRIPT_PROP.deleteProperty(BOOTSTRAP_SNAPSHOT_KEY);
+      CacheService.getScriptCache().remove("BOOTSTRAP_V1");
+      SCRIPT_PROP.setProperty("V8_FAST_DLU", "1");
+      // Reconstruire les feuilles Contenu en batch (en arrière-plan pour les prochains chargements)
+      rebuildContenuSheetsBatch_();
+    } catch(e) {
+      Logger.log("V8 error: " + e);
+      SCRIPT_PROP.setProperty("V8_FAST_DLU", "1");
+    }
+    var payload = rebuildBootstrapSnapshot_();
     if (payload) CacheService.getScriptCache().put("BOOTSTRAP_V1", JSON.stringify(payload), 5);
     return payload;
   }
 
-  const cache = CacheService.getScriptCache();
-  const cached = cache.get("BOOTSTRAP_V1");
+  var cache = CacheService.getScriptCache();
+  var cached = cache.get("BOOTSTRAP_V1");
   if (cached) return JSON.parse(cached);
 
-  const snap = SCRIPT_PROP.getProperty(BOOTSTRAP_SNAPSHOT_KEY);
+  var snap = SCRIPT_PROP.getProperty(BOOTSTRAP_SNAPSHOT_KEY);
   if (snap) {
     cache.put("BOOTSTRAP_V1", snap, 5);
     return JSON.parse(snap);
   }
 
-  const payload = rebuildBootstrapSnapshot_();
+  var payload = rebuildBootstrapSnapshot_();
   if (payload) cache.put("BOOTSTRAP_V1", JSON.stringify(payload), 5);
   return payload;
+}
+
+// Reconstruire les feuilles Contenu en batch (setValues, pas appendRow)
+function rebuildContenuSheetsBatch_() {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    VENDEE_VLI_BAGS.forEach(function(bagName) {
+      var sheetName = "Contenu " + bagName;
+      var sheet = ss.getSheetByName(sheetName);
+      if (!sheet) sheet = ss.insertSheet(sheetName);
+      sheet.clearContents();
+      var rows = [["Section", "Item", "Type", "Def", "Position"]];
+      var form = VENDEE_VLI_FORMS[bagName] || VENDEE_VLI1_FORM;
+      form.forEach(function(sec) {
+        (sec.items || []).forEach(function(it) {
+          rows.push([sec.section, it.name, it.type, it.def, sec.position || ""]);
+        });
+      });
+      sheet.getRange(1, 1, rows.length, 5).setValues(rows);
+    });
+  } catch(e) {
+    Logger.log("rebuildContenuSheetsBatch_ error: " + e);
+  }
 }
 
 function rebuildBootstrapSnapshot_() {
