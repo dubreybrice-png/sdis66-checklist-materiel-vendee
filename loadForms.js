@@ -19,7 +19,13 @@ function loadFormStructures() {
         const section = data[i][0] ? data[i][0].toString().trim() : "";
         const item = data[i][1] ? data[i][1].toString().trim() : "";
         const type = data[i][2] ? data[i][2].toString().toLowerCase().trim() : "texte";
-        const def = data[i][3] ? data[i][3].toString().trim() : "";
+        // Gérer les dates : Google Sheets convertit "2028-03-01" en objet Date
+        let def = "";
+        if (data[i][3] instanceof Date) {
+          def = Utilities.formatDate(data[i][3], Session.getScriptTimeZone(), "yyyy-MM-dd");
+        } else if (data[i][3]) {
+          def = data[i][3].toString().trim();
+        }
         const position = data[i][4] ? data[i][4].toString().trim() : "";
         
         if (!section || !item) continue;
@@ -51,6 +57,12 @@ function loadFormStructures() {
 // Appeler au démarrage pour charger les formulaires
 function initializeForms() {
   const prop = PropertiesService.getScriptProperties();
+  // V5: forcer le rechargement pour corriger le format des dates
+  if (!prop.getProperty("FORMS_V5_DATE_FIX")) {
+    loadFormStructures();
+    prop.setProperty("FORMS_V5_DATE_FIX", "1");
+    return;
+  }
   if (!prop.getProperty("FORMS_JSON")) {
     loadFormStructures();
   }
