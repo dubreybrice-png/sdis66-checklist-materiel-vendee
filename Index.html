@@ -227,6 +227,7 @@
         <button class="nav-btn" onclick="showTab('tab-mailing')">Mailing</button>
         <button class="nav-btn" onclick="showTab('tab-photos')">Photos</button>
         <button class="nav-btn" onclick="showTab('tab-opts')">Options</button>
+        <button class="nav-btn" onclick="showTab('tab-interventions'); renderInterventionsTab();" style="background:linear-gradient(135deg,#1976d2,#1565c0); color:#fff;">🚑 Traçabilité VLI</button>
       </div>
       
       <div id="tab-inv" class="admin-tab active">
@@ -404,6 +405,36 @@
            <button class="admin-btn success" onclick="saveOptions()">Sauvegarder</button>
          </div>
       </div>
+
+      <!-- ONGLET TRAÇABILITÉ INTERVENTIONS VLI -->
+      <div id="tab-interventions" class="admin-tab">
+        <div class="admin-card">
+          <h3 style="margin-top:0; color:#1976d2;">🚑 Traçabilité d'intervention secteur VLI</h3>
+          <p style="color:#666; margin-bottom:15px;">Historique de toutes les interventions enregistrées en secteur VLI.</p>
+          <div style="margin-bottom:15px;">
+            <button class="admin-btn" onclick="openInterventionModal()" style="background:linear-gradient(135deg,#1976d2,#1565c0); color:#fff;">+ Nouvelle intervention</button>
+            <button class="admin-btn secondary" onclick="renderInterventionsTab()" style="margin-left:8px;">🔄 Rafraîchir</button>
+          </div>
+          <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.92em;">
+              <thead>
+                <tr style="background:var(--section-bg); border-bottom:2px solid #1976d2;">
+                  <th style="padding:10px; text-align:left;">Date</th>
+                  <th style="padding:10px; text-align:left;">ISP</th>
+                  <th style="padding:10px; text-align:left;">CIS</th>
+                  <th style="padding:10px; text-align:left;">Commune</th>
+                  <th style="padding:10px; text-align:left;">N° d'inter</th>
+                  <th style="padding:10px; text-align:left;">VLI</th>
+                  <th style="padding:10px; text-align:left;">Horodatage</th>
+                </tr>
+              </thead>
+              <tbody id="interventions-body">
+                <tr><td colspan="7" style="text-align:center; padding:20px; color:#999;">Cliquez sur "Rafraîchir" pour charger les données.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div id="chkModal" class="modal-overlay">
@@ -493,6 +524,49 @@
         <div style="padding:12px; border-top:1px solid var(--border-color); background:var(--section-bg); display:flex; gap:10px;">
           <button class="admin-btn" onclick="addVliImpactPhoto()" style="flex:1;">📷 Ajouter photo + commentaire</button>
           <button class="admin-btn secondary" onclick="closeM('vliImpactModal')">Fermer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL INTERVENTION VLI -->
+    <div id="interventionModal" class="modal-overlay" onclick="closeM('interventionModal')">
+      <div class="modal" style="max-width:500px;" onclick="event.stopPropagation()">
+        <div style="padding:12px 15px; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center; background:linear-gradient(135deg,#1976d2,#1565c0);">
+          <h3 style="margin:0; color:#fff;">🚑 Tracer une intervention en secteur VLI</h3>
+          <span onclick="closeM('interventionModal')" style="cursor:pointer; font-size:1.5rem; color:#fff;">&times;</span>
+        </div>
+        <div class="modal-body" style="padding:20px;">
+          <div style="margin-bottom:14px;">
+            <label style="font-weight:600; display:block; margin-bottom:4px;">Date *</label>
+            <input type="date" id="inter-date" required style="width:100%; padding:10px; border:1px solid var(--border-color); border-radius:6px; background:var(--input-bg); color:var(--input-text); font-size:1em;">
+          </div>
+          <div style="margin-bottom:14px;">
+            <label style="font-weight:600; display:block; margin-bottom:4px;">ISP *</label>
+            <input type="text" id="inter-isp" required placeholder="Nom de l'ISP" style="width:100%; padding:10px; border:1px solid var(--border-color); border-radius:6px; background:var(--input-bg); color:var(--input-text); font-size:1em;">
+          </div>
+          <div style="margin-bottom:14px;">
+            <label style="font-weight:600; display:block; margin-bottom:4px;">CIS *</label>
+            <input type="text" id="inter-cis" required placeholder="Centre d'incendie et de secours" style="width:100%; padding:10px; border:1px solid var(--border-color); border-radius:6px; background:var(--input-bg); color:var(--input-text); font-size:1em;">
+          </div>
+          <div style="margin-bottom:14px;">
+            <label style="font-weight:600; display:block; margin-bottom:4px;">Commune d'intervention *</label>
+            <input type="text" id="inter-commune" required placeholder="Commune" style="width:100%; padding:10px; border:1px solid var(--border-color); border-radius:6px; background:var(--input-bg); color:var(--input-text); font-size:1em;">
+          </div>
+          <div style="margin-bottom:14px;">
+            <label style="font-weight:600; display:block; margin-bottom:4px;">N° d'intervention *</label>
+            <input type="text" id="inter-num" required placeholder="Numéro d'intervention" style="width:100%; padding:10px; border:1px solid var(--border-color); border-radius:6px; background:var(--input-bg); color:var(--input-text); font-size:1em;">
+          </div>
+          <div style="margin-bottom:14px;">
+            <label style="font-weight:600; display:block; margin-bottom:4px;">VLI *</label>
+            <select id="inter-vli" required style="width:100%; padding:10px; border:1px solid var(--border-color); border-radius:6px; background:var(--input-bg); color:var(--input-text); font-size:1em;">
+              <option value="">-- Sélectionner --</option>
+              <option value="Oui">Oui</option>
+              <option value="Non">Non</option>
+            </select>
+          </div>
+        </div>
+        <div style="padding:12px 20px; border-top:1px solid var(--border-color); background:var(--section-bg);">
+          <button onclick="submitIntervention()" style="width:100%; background:linear-gradient(135deg,#1976d2,#1565c0); color:#fff; border:none; padding:14px; border-radius:8px; font-size:1.05em; font-weight:600; cursor:pointer;">💾 Enregistrer</button>
         </div>
       </div>
     </div>
@@ -618,10 +692,20 @@
               div.onclick = () => openCheck(item); g.appendChild(div);
            });
            app.appendChild(g);
+           // Bouton "Tracer une intervention en secteur VLI" sous les tuiles VLI
+           if (cat === 'VLI') {
+             const interBtn = document.createElement('div');
+             interBtn.style.cssText = 'text-align:center; margin:18px 0 10px 0;';
+             interBtn.innerHTML = '<button onclick="openInterventionModal()" style="background:linear-gradient(135deg,#1976d2,#1565c0); color:#fff; border:none; padding:14px 32px; border-radius:8px; font-size:1.05em; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(25,118,210,0.3); transition:transform 0.15s;">🚑 Tracer une intervention en secteur VLI</button>';
+             app.appendChild(interBtn);
+           }
         });
         const sel = document.getElementById('new-bag-cat'); const sel2 = document.getElementById('cat-selector');
         sel.innerHTML = ""; sel2.innerHTML = "";
-        D.categoriesOrder.forEach(c => { sel.innerHTML += `<option>${c}</option>`; sel2.innerHTML += `<option>${c}</option>`; });
+        D.categoriesOrder.forEach(c => { sel.innerHTML += `<option>${c}</option>`; });
+        // Peupler l'éditeur avec les clés de formulaires (VLI 1, VLI 2…)
+        if (D.forms) { Object.keys(D.forms).forEach(k => { sel2.innerHTML += `<option>${k}</option>`; }); }
+        else { D.categoriesOrder.forEach(c => { sel2.innerHTML += `<option>${c}</option>`; }); }
         renderAdmin(); renderStats(); renderEditor();
       }
 
@@ -636,8 +720,10 @@
         document.getElementById('extra-fields').style.display = D.options.enableExpiry ? 'block' : 'none';
         document.getElementById('verif-field').style.display = D.options.enableVerifier ? 'block' : 'none';
         const b = document.getElementById('m-body'); b.innerHTML = "";
-        if(D.forms && D.forms[item.category]) {
-           D.forms[item.category].forEach((sec, secIdx) => {
+        // Résolution du formulaire : d'abord par nom de sac (VLI 1/VLI 2), puis par catégorie
+        const formSections = (D.forms && (D.forms[item.name] || D.forms[item.category])) || [];
+        if(formSections.length) {
+           formSections.forEach((sec, secIdx) => {
               let p = sec.position ? `<span class="zone-pos">${sec.position}</span>` : "";
               const photoKey = makePhotoKey(item.category, item.name, sec.section);
               const hasPhoto = checkPhotoPresence(photoKey);
@@ -938,8 +1024,9 @@
             </div>`;
           
           // Pour chaque item, parcourir ses sections
-          if (D.forms && D.forms[category]) {
-            D.forms[category].forEach((sec) => {
+          const bagFormSections = (D.forms && (D.forms[bagName] || D.forms[category])) || [];
+          if (bagFormSections.length) {
+            bagFormSections.forEach((sec) => {
               const section = sec.section;
               const photoKey = makePhotoKey(category, bagName, section);
               const thumbId = `photo-thumb-${rowIndex}`;
@@ -1596,6 +1683,76 @@
       // === VLI IMPACT ===
       let CURR_VLI_NAME = '';
       
+      // ====== INTERVENTION VLI ======
+      function openInterventionModal() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('inter-date').value = today;
+        document.getElementById('inter-isp').value = '';
+        document.getElementById('inter-cis').value = '';
+        document.getElementById('inter-commune').value = '';
+        document.getElementById('inter-num').value = '';
+        document.getElementById('inter-vli').value = '';
+        document.getElementById('interventionModal').style.display = 'flex';
+      }
+
+      function submitIntervention() {
+        const data = {
+          date: document.getElementById('inter-date').value,
+          isp: document.getElementById('inter-isp').value.trim(),
+          cis: document.getElementById('inter-cis').value.trim(),
+          commune: document.getElementById('inter-commune').value.trim(),
+          numInter: document.getElementById('inter-num').value.trim(),
+          vli: document.getElementById('inter-vli').value
+        };
+        if (!data.date || !data.isp || !data.cis || !data.commune || !data.numInter || !data.vli) {
+          alert('⚠️ Tous les champs sont obligatoires.');
+          return;
+        }
+        const btn = event.target;
+        btn.disabled = true; btn.textContent = '⏳ Enregistrement...';
+        google.script.run.withSuccessHandler(r => {
+          btn.disabled = false; btn.textContent = '💾 Enregistrer';
+          if (r && r.success) {
+            alert('✅ Intervention enregistrée avec succès.');
+            closeM('interventionModal');
+            // Rafraîchir la table admin si visible
+            if (typeof renderInterventionsTab === 'function') renderInterventionsTab();
+          } else {
+            alert('❌ Erreur: ' + (r ? r.error : 'inconnue'));
+          }
+        }).withFailureHandler(err => {
+          btn.disabled = false; btn.textContent = '💾 Enregistrer';
+          alert('❌ Erreur: ' + err);
+        }).saveVliIntervention(data);
+      }
+
+      function renderInterventionsTab() {
+        const body = document.getElementById('interventions-body');
+        if (!body) return;
+        body.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px;">⏳ Chargement...</td></tr>';
+        google.script.run.withSuccessHandler(list => {
+          if (!list || list.length === 0) {
+            body.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:#999;">Aucune intervention enregistrée.</td></tr>';
+            return;
+          }
+          let html = '';
+          list.forEach(r => {
+            html += `<tr>
+              <td style="padding:8px 10px;">${r.date || ''}</td>
+              <td style="padding:8px 10px;">${r.isp || ''}</td>
+              <td style="padding:8px 10px;">${r.cis || ''}</td>
+              <td style="padding:8px 10px;">${r.commune || ''}</td>
+              <td style="padding:8px 10px;">${r.numInter || ''}</td>
+              <td style="padding:8px 10px;">${r.vli || ''}</td>
+              <td style="padding:8px 10px; font-size:0.85em; color:#999;">${r.horodatage || ''}</td>
+            </tr>`;
+          });
+          body.innerHTML = html;
+        }).withFailureHandler(err => {
+          body.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:#c62828;">Erreur: ' + err + '</td></tr>';
+        }).getVliInterventions();
+      }
+
       function openVliImpact(name) {
         CURR_VLI_NAME = name;
         document.getElementById('vliImpactTitle').textContent = '🔍 Impact — ' + name;

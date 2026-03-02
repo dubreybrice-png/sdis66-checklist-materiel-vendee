@@ -34,7 +34,369 @@ function makeVliItem_(name, dlu, qty) {
   return { name: `${name}${q}`, type: "date", def: normalizeDlu_(dlu) };
 }
 
-const VENDEE_VLI_FORM = [
+// =============================================
+// === VLI 1 — CIS Chantonnay (images 1/2/3) ===
+// =============================================
+const VENDEE_VLI1_FORM = [
+  {
+    section: "POCHETTE PERFUSION (ROUGE)",
+    items: [
+      makeVliItem_("Cathéter 16 G", "1/3/2028", "x3"),
+      makeVliItem_("Cathéter 18 G", "1/8/2028", "x3"),
+      makeVliItem_("Cathéter 20 G", "1/1/2029", "x3"),
+      makeVliItem_("Cathéter 22 G", "1/7/2028", "x3"),
+      makeVliItem_("Cathéter 24 G", "1/1/2027", "x3"),
+      makeVliItem_("Rasoir", "/", "x1"),
+      makeVliItem_("Champ non stérile", "/", "x1"),
+      makeVliItem_("Garrot adulte", "/", "x1"),
+      makeVliItem_("Compresses stériles 7,5 x 7,5 cm", "31/8/2029", "x3"),
+      makeVliItem_("Chlorhexidine alcoolique 40ml", "28/3/2027", "x1"),
+      makeVliItem_("NaCl 0,9 % 100 ml", "28/12/2026", "x2"),
+      makeVliItem_("Tégaderm", "25/1/2027", "x2"),
+      makeVliItem_("Tubulure 3 voies", "1/1/2027", "x1"),
+      makeVliItem_("Régulateur de débit", "19/8/2028", "x1"),
+      makeVliItem_("Règlette EVA adulte, enfant", "/", "x1+1"),
+      makeVliItem_("Solution hydro-alcoolique", "31/5/2028", "x1"),
+      makeVliItem_("Kit de prélèvement sanguin", "30/4/2026", "x1"),
+      makeVliItem_("Tulipe", "/", "x1"),
+      makeVliItem_("Adaptateur", "/", "x1"),
+      makeVliItem_("Tube sec", "/", "x1"),
+      makeVliItem_("Tube NFS plaquettes", "/", "x1"),
+      makeVliItem_("Tube TP", "/", "x1"),
+      makeVliItem_("Tube ionogramme, glycémie", "/", "x1"),
+      makeVliItem_("Tube toxique", "/", "x1"),
+      makeVliItem_("Poche bilan + étiquettes patient", "/", "x1"),
+      makeVliItem_("Tensoban®", "/", "x1")
+    ]
+  },
+  {
+    section: "POCHETTE AMPOULIER (JAUNE)",
+    items: [
+      makeVliItem_("Seringue 5 cc luer lock", "31/5/2027", "x4"),
+      makeVliItem_("Seringue 10 cc luer", "31/12/2026", "x2"),
+      makeVliItem_("Seringue 10 cc luer lock", "1/2/2029", "x2"),
+      makeVliItem_("Seringue 20 cc luer lock (G30% / dilution amiodarone pédiatrique)", "31/1/2027", "x2"),
+      makeVliItem_("Seringue sous-cutanée 1 cc (adrénaline pédiatrique)", "31/10/2028", "x2"),
+      makeVliItem_("Aiguille IV", "31/8/2026", "x2"),
+      makeVliItem_("Aiguille à prélèvement", "1/6/2028", "x2"),
+      makeVliItem_("Aiguille IM", "31/5/2027", "x2"),
+      makeVliItem_("Aiguille IM obèse", "31/4/2028", "x1"),
+      makeVliItem_("Paracétamol® IV 1 g", "31/2/2027", "x1"),
+      makeVliItem_("Tubulure 3 voies", "1/1/2027", "x1"),
+      makeVliItem_("Clonazepam 1 mg / 1 ml", "31/10/2027", "x4"),
+      makeVliItem_("EPPI 1 ml", "30/6/2029", "x4"),
+      makeVliItem_("Trinitrine 0,30 mg", "31/3/2027", "x1"),
+      makeVliItem_("Acide tranexamique 0,5 g / 5 ml", "31/2/2027", "x4"),
+      makeVliItem_("Furosémide 20 mg / 2 ml", "28/9/2026", "x4"),
+      makeVliItem_("Paracétamol® IV 500 mg", "30/1/2027", "x1"),
+      makeVliItem_("Patch Lidocaïne prilocaïne", "31/10/2026", "x2"),
+      makeVliItem_("Glucose 30% 10 ml", "31/7/2026", "x4"),
+      makeVliItem_("Diazépam 10 mg / 2 ml", "31/1/2026", "x2"),
+      makeVliItem_("Canule rectale", "/", "x1"),
+      makeVliItem_("Glucose 5% 20 ml (dilution cordarone pédiatrique)", "31/11/2026", "x2"),
+      makeVliItem_("Amiodarone 150 mg / 3 ml", "1/9/2026", "x3"),
+      makeVliItem_("Adrénaline 5 mg / 5 ml", "1/10/2026", "x4"),
+      makeVliItem_("Adrénaline 1 mg / 1 ml", "1/10/2026", "x2"),
+      makeVliItem_("Paracétamol® lyoc 250 mg", "30/4/2028", "x1"),
+      makeVliItem_("Paracétamol® lyoc 500 mg", "30/7/2075", "x1"),
+      makeVliItem_("EPPI 10 ml", "31/8/2026", "x2")
+    ]
+  },
+  {
+    section: "AMPOULIER STUPÉFIANTS — CÔTÉ ORAMORPH",
+    items: [
+      makeVliItem_("Ampoule Oramorph 30 mg / 5 ml", "31/5/2027", "x4"),
+      makeVliItem_("Seringue 5 cc", "31/12/2027", "x2"),
+      makeVliItem_("Aiguille à prélèvement", "1/6/2028", "x2"),
+      makeVliItem_("Aiguille IV", "1/2/2027", "x2")
+    ]
+  },
+  {
+    section: "AMPOULIER STUPÉFIANTS — KIT MORPHINE / NARCAN",
+    items: [
+      makeVliItem_("Ampoule Morphine 10 mg / 1 ml", "31/10/2026", "x6"),
+      makeVliItem_("Ampoule NaCl 0,9% 10 ml", "31/8/2027", "x2"),
+      makeVliItem_("Seringue 10 cc", "30/2/2029", "x2"),
+      makeVliItem_("Aiguille IV", "28/2/2027", "x2"),
+      makeVliItem_("Aiguille à prélèvement", "30/6/2028", "x2"),
+      makeVliItem_("Ampoule Naloxone 0,4 mg / 1 ml", "31/8/2027", "x1")
+    ]
+  },
+  {
+    section: "POCHETTE PANSEMENTS (VERTE)",
+    items: [
+      makeVliItem_("Bande 5 cm", "31/1/2031", "x1"),
+      makeVliItem_("Bande 10 cm", "31/3/2029", "x1"),
+      makeVliItem_("Couverture de survie", "/", "x2"),
+      makeVliItem_("Dakin 60 ml", "31/9/2026", "x1"),
+      makeVliItem_("Dosette Dacryosérum", "30/11/2026", "x5"),
+      makeVliItem_("NaCl 0,9% dosette 45 ml", "31/8/2027", "x2"),
+      makeVliItem_("Paire de ciseaux JESCO", "/", "x1"),
+      makeVliItem_("Pansement américain stérile", "28/2/2027", "x2"),
+      makeVliItem_("Sparadrap", "/", "x1"),
+      makeVliItem_("Garrot tourniquet", "/", "x1"),
+      makeVliItem_("Bande Tensoban 7 cm", "/", "x1"),
+      makeVliItem_("Compresses stériles 7,5 x 7,5 cm", "30/11/2028", "x3")
+    ]
+  },
+  {
+    section: "POCHETTE VENTILATION (BLEUE)",
+    items: [
+      makeVliItem_("Dosette Terbutaline adulte 5 mg / 2 ml", "31/2/2027", "x4"),
+      makeVliItem_("Dosette Ipratropium 0,50 mg / 2 ml", "30/3/2027", "x2"),
+      makeVliItem_("Dosette Ipratropium 0,25 mg / 1 ml", "30/1/2028", "x2"),
+      makeVliItem_("Dosette Salbutamol enfant 2,5 mg / 2,5 ml", "31/1/2027", "x4"),
+      makeVliItem_("Dosette NaCl 0,9% 10 ml", "31/8/2027", "x2"),
+      makeVliItem_("Masque aérosol adulte", "1/6/2026", "x1"),
+      makeVliItem_("Masque aérosol enfant", "/", "x1"),
+      makeVliItem_("Masque chambre inhalation bébé/enfant/adulte", "/", "x1"),
+      makeVliItem_("Chambre inhalation", "/", "x1"),
+      makeVliItem_("Salbutamol flacon pressurisé", "30/10/2026", "x1"),
+      makeVliItem_("Canule de Guédel (petite/moyenne/grande)", "31/10/2027", "x1+1+1"),
+      makeVliItem_("Sonde d'aspiration 8ch & 10ch", "30/7/2029", "x1+1")
+    ]
+  },
+  {
+    section: "POCHETTE SOLUTÉS (NOIRE)",
+    items: [
+      makeVliItem_("NaCl 0,9% 500 ml", "28/2/2027", "x2"),
+      makeVliItem_("Tubulure 3 voies", "1/1/2027", "x2"),
+      makeVliItem_("NaCl 0,9% 100 ml", "28/12/2026", "x1"),
+      makeVliItem_("Glucosé 10% 500 ml", "31/2/2028", "x1"),
+      makeVliItem_("Seringue 50 cc luer lock (G10% pédiatrique)", "1/6/2029", "x1")
+    ]
+  },
+  {
+    section: "POCHE DESSUS DE SAC",
+    items: [
+      makeVliItem_("Bandelettes (+ glucomètre + 5 lancettes)", "31/8/2026", "x5"),
+      makeVliItem_("Stéthoscope", "/", "x1"),
+      makeVliItem_("Stylo lampe", "/", "x1"),
+      makeVliItem_("Tensiomètre manuel + brassards (L-M-S)", "/", "x1"),
+      makeVliItem_("ThermoScan + embouts", "/", "x1"),
+      makeVliItem_("Lampe frontale rechargeable", "/", "x1")
+    ]
+  },
+  {
+    section: "CÔTÉ GAUCHE SAC",
+    items: [
+      makeVliItem_("Paires gants S/M/L (3 poches zippées)", "/", "x4"),
+      makeVliItem_("Livrets protocoles", "/", "x1")
+    ]
+  },
+  {
+    section: "CÔTÉ DROIT SAC",
+    items: [
+      makeVliItem_("Rouleau poche poubelle jaune", "/", "x1"),
+      makeVliItem_("Boite à DASRI", "/", "x1"),
+      makeVliItem_("Kit infectieux (combinaison, masque chir, masque FFP)", "/", "x1")
+    ]
+  },
+  {
+    section: "RABAT VENTRAL",
+    items: [
+      makeVliItem_("Fiches bilan (+ support écriture)", "/", "x10")
+    ]
+  },
+  {
+    section: "COMPARTIMENT HAUT INTÉRIEUR SAC",
+    items: [
+      makeVliItem_("Ampoulier morphinique", "/", "x1")
+    ]
+  },
+  // === POCHETTES VLI 01 (image 2) ===
+  {
+    section: "RÉSERVE ISP",
+    items: [
+      makeVliItem_("Paracétamol IV 1g", "1/2/2027", "x1"),
+      makeVliItem_("Paracétamol IV 500mg", "31/1/2027", "x1"),
+      makeVliItem_("NaCl 0,9% 100ml", "28/12/2026", "x2"),
+      makeVliItem_("Tubulures 3 voies", "1/7/2026", "x4"),
+      makeVliItem_("Tégadermes", "25/1/2027", "x4"),
+      makeVliItem_("Chlorhexidine Alcoolique 2%", "28/3/2027", "x1"),
+      makeVliItem_("Garrot", "/", "x1"),
+      makeVliItem_("Paquet Compresses", "31/12/2026", "x4"),
+      makeVliItem_("Cathéter 18 G", "1/3/2028", "x2"),
+      makeVliItem_("Cathéter 20 G", "1/8/2028", "x2"),
+      makeVliItem_("Kits de prélèvements", "31/4/2026", "x1"),
+      makeVliItem_("Sachets 10 électrodes ECG", "1/8/2026", "x1"),
+      makeVliItem_("Masque aérosol Adulte", "31/6/2026", "x1"),
+      makeVliItem_("Capteur Sat° Ped", "1/1/2028", "x1")
+    ]
+  },
+  {
+    section: "RÉSERVE ISP — KIT CYANOKIT",
+    items: [
+      makeVliItem_("Cyanokit 5 g", "30/4/2028", "x2"),
+      makeVliItem_("NaCl 0,9% 250 ml", "30/2/2027", "x1"),
+      makeVliItem_("Seringue 50 ml", "31/6/2029", "x1"),
+      makeVliItem_("Aiguille Prélèvement", "1/6/2028", "x1")
+    ]
+  },
+  {
+    section: "RÉSERVE ISP — KIT BRULSTOP",
+    items: [
+      makeVliItem_("Compresses imprégnées PETIT", "31/8/2027", "x2"),
+      makeVliItem_("Compresses imprégnées MOYEN", "30/4/2028", "x2"),
+      makeVliItem_("Compresses imprégnées GRAND", "30/4/2028", "x2")
+    ]
+  },
+  {
+    section: "RÉSERVE ISP — HemoCue",
+    items: [
+      makeVliItem_("Microcuvettes", "3/3/2027", "x1 boîte"),
+      makeVliItem_("Compresse", "1/5/2028", "x1"),
+      makeVliItem_("Kit nettoyage (alcool/compresse)", "/", "x1")
+    ]
+  },
+  {
+    section: "RÉSERVE ISP — SSO 1",
+    items: [
+      makeVliItem_("Glucopulse", "31/1/2027", "x1 boîte"),
+      makeVliItem_("Laves œil 250 ml", "31/7/2027", "x2"),
+      makeVliItem_("Bande 5 cm", "31/11/2028", "x4"),
+      makeVliItem_("Bande 10 cm", "31/3/2029", "x4"),
+      makeVliItem_("Pansement américains", "30/6/2028", "x4"),
+      makeVliItem_("Sparadrap", "/", "x1"),
+      makeVliItem_("Compresses", "30/11/2028", "x10"),
+      makeVliItem_("NaCl 45 ml", "31/5/2027", "x4")
+    ]
+  },
+  {
+    section: "RÉSERVE ISP — KIT ASPI",
+    items: [
+      makeVliItem_("Réceptacle aspi mucosité", "7/6/2029", "x1"),
+      makeVliItem_("Sonde aspi", "20/12/2028", "x1")
+    ]
+  },
+  {
+    section: "RÉSERVE ISP — SCHILLER T7",
+    items: [
+      makeVliItem_("Patch DSA", "29/5/1900", "x1"),
+      makeVliItem_("Capteur Sat° péd", "1/5/2025", "x1"),
+      makeVliItem_("Poche 10 électrodes", "1/6/1900", "x1")
+    ]
+  },
+  {
+    section: "RÉSERVE ISP — KIT DAMAGE CONTROL",
+    items: [
+      makeVliItem_("Pansement compressif d'urgence", "27/6/2029", "x5")
+    ]
+  },
+  {
+    section: "RÉSERVE ISP — SAC PS",
+    items: [
+      makeVliItem_("BAVU UU adulte", "9/5/2027", "x1"),
+      makeVliItem_("BAVU UU péd.", "26/6/2028", "x1"),
+      makeVliItem_("Masque HC adulte", "30/4/2029", "x1"),
+      makeVliItem_("Masque HC péd.", "31/10/2026", "x1"),
+      makeVliItem_("Bouteille O2 B5", "30/9/2029", "x1"),
+      makeVliItem_("Collier cervical adulte/enfant", "/", "x1+1"),
+      makeVliItem_("Fiche bilan", "/", "x10")
+    ]
+  },
+  {
+    section: "RÉSERVE ISP — AUTRES",
+    items: [
+      makeVliItem_("Spray désinfectant surface", "31/7/2026", "x1"),
+      makeVliItem_("Bouteille eau potable 50 ml", "/", "x6"),
+      makeVliItem_("SHA (avant véhicule)", "5/9/2026", "x1")
+    ]
+  },
+  // === PHARMACIE VLI 01 (image 3) ===
+  {
+    section: "PÉREMPTION PHARMACIE",
+    items: [
+      makeVliItem_("Acide tranexamique 0,5m/5ml", "28/2/2027", "x5"),
+      makeVliItem_("Adrénaline 1mg/1ml", "31/12/2025", "x5"),
+      makeVliItem_("Adrénaline 5mg/5ml", "31/3/2026 (5) / 30/6/2026 (20)", "x25"),
+      makeVliItem_("Aiguilles à prélèvement", "1/6/2028", "x100"),
+      makeVliItem_("Aiguilles IM", "30/5/2027", "x10"),
+      makeVliItem_("Aiguilles IM (obèse)", "31/1/2026", "x10"),
+      makeVliItem_("Aiguilles IV", "31/1/2026", "x5"),
+      makeVliItem_("Amiodarone 150mg/3ml", "30/9/2026", "x20"),
+      makeVliItem_("Bactiseptic", "31/10/2026", "x20"),
+      makeVliItem_("Bandelettes glycémie", "/", "Réappro CS"),
+      makeVliItem_("Bandes 5 cm et 10cm", "/", "Réappro CS"),
+      makeVliItem_("Bon de réapprovisionnement pharmacie", "/", "Commande GLPI"),
+      makeVliItem_("Canule rectale", "30/6/2026", "x2"),
+      makeVliItem_("Canule de guédel", "/", "/"),
+      makeVliItem_("Capteur SpO² pédiatrique", "1/7/2027", "x20"),
+      makeVliItem_("Cathéter 16G", "1/3/2028", "x5"),
+      makeVliItem_("Cathéter 18G", "1/8/2028", "x50"),
+      makeVliItem_("Cathéter 20G", "1/1/2029", "x50"),
+      makeVliItem_("Cathéter 22G", "1/7/2028", "x10"),
+      makeVliItem_("Cathéter 24G", "1/1/2027", "x5"),
+      makeVliItem_("Chambre d'inhalation Vortex*", "/", "x0"),
+      makeVliItem_("Champs non stériles", "30/4/2027", "x20"),
+      makeVliItem_("Clonazépam 1mg/1ml", "31/3/2028", "x4"),
+      makeVliItem_("Compresses stériles", "/", "50 (Réappro CS)"),
+      makeVliItem_("Container à aiguilles", "/", "Réappro CS"),
+      makeVliItem_("Couverture de survie", "/", "Réappro CS"),
+      makeVliItem_("Couvre thermomètre (Tempaset*)", "/", "Réappro CS"),
+      makeVliItem_("Dacryosérum", "31/1/2027", "x5"),
+      makeVliItem_("Dakin", "/", "Réappro CS"),
+      makeVliItem_("Diazépam 10mg/2ml", "31/7/2026", "x6"),
+      makeVliItem_("Électrodes DSA T7", "31/10/2027", "x5"),
+      makeVliItem_("Électrodes multiparamètres", "18/8/2026", "x200"),
+      makeVliItem_("EPPI 1ml", "31/12/2028 (1) / 30/6/2029 (3)", "x4"),
+      makeVliItem_("EPPI 10ml", "31/7/2025", "x5"),
+      makeVliItem_("Fiche intervention SSSM", "/", "x200"),
+      makeVliItem_("Furosémide 20mg/2ml", "28/2/2026", "x5"),
+      makeVliItem_("Garrot adulte", "/", "x10"),
+      makeVliItem_("Glucose 10% 500ml", "31/1/2026", "x2"),
+      makeVliItem_("Glucose 30% 10ml", "31/1/2026", "x10"),
+      makeVliItem_("Glucose 5% 20ml", "30/11/2026", "x1"),
+      makeVliItem_("Ipratropium unidose 0,25mg", "28/2/2027 (10)", "x20"),
+      makeVliItem_("Ipratropium unidose 0,50mg", "31/3/2027", "x10"),
+      makeVliItem_("Kit risques infectieux ISP", "/", "x1"),
+      makeVliItem_("Lancettes glycémie", "/", "Réappro CS"),
+      makeVliItem_("Lidocaïne Prilocaïne patch", "30/6/2026 (4) / 31/10/2026 (6)", "x10"),
+      makeVliItem_("Masque aérosol adulte", "14/3/2027 (1) / 28/2/2027", "x5"),
+      makeVliItem_("Masque aérosol enfant", "28/2/2027", "x5"),
+      makeVliItem_("Masque chambre d'inhalation Vortex*", "/", "/"),
+      makeVliItem_("Masques chirurgicaux", "28/2/2029", "x50"),
+      makeVliItem_("NaCl 0,9% 10ml", "31/8/2027", "x50"),
+      makeVliItem_("NaCl 0,9% 45ml", "31/8/2027", "x2 (Réappro CS)"),
+      makeVliItem_("NaCl 0,9% 100ml", "31/5/2026 (120) / 31/12/2026 (60)", "x120"),
+      makeVliItem_("NaCl 0,9% 500ml", "30/11/2025 (13) / 28/2/2026 (7)", "x10"),
+      makeVliItem_("Naloxone 0,40mg/1ml", "31/12/2027", "x1"),
+      makeVliItem_("Paire de gants", "/", "1 S, M, L (Réappro CS)"),
+      makeVliItem_("Pansements Américains stériles", "/", "/"),
+      makeVliItem_("Paracétamol adulte 1000mg/100ml", "31/3/2026", "x50"),
+      makeVliItem_("Paracétamol enfant 500mg/50ml", "30/4/2026 (3)", "x5"),
+      makeVliItem_("Paralyoc 250 mg", "28/2/2026", "1 boîte"),
+      makeVliItem_("Paralyoc 500mg", "30/6/2027", "10 boîtes"),
+      makeVliItem_("Plateau de soin", "/", "x30"),
+      makeVliItem_("Poches DASRI jaunes", "/", "Réappro CS"),
+      makeVliItem_("Rasoir", "/", "Réappro CS"),
+      makeVliItem_("Régulateur de débit", "9/2/2026 (1) / 19/8/2028 (1)", "x2"),
+      makeVliItem_("Salbutamol flacon pressurisé", "31/10/2026", "x2"),
+      makeVliItem_("Salbutamol unidose enfant 2,5mg/2,5ml", "31/10/2025", "x10"),
+      makeVliItem_("Seringue 1cc sous cutanée", "31/10/2028", "x2"),
+      makeVliItem_("Seringue 5cc Luer Lock", "28/2/2029", "x15"),
+      makeVliItem_("Seringue 10cc Luer", "31/8/2028", "x20"),
+      makeVliItem_("Seringue 20cc Luer Lock", "31/7/2028", "x5"),
+      makeVliItem_("Seringue 50cc Luer Lock", "1/6/2029", "x2"),
+      makeVliItem_("Sonde aspiration 8ch", "31/7/2029", "x1"),
+      makeVliItem_("Sonde aspiration 10 ch", "31/12/2027", "x1"),
+      makeVliItem_("Solution hydro-alcoolique", "/", "Réappro CS"),
+      makeVliItem_("Sparadrap", "/", "/"),
+      makeVliItem_("Tensoban® 7cm", "/", "x2"),
+      makeVliItem_("Terbutaline unidose adulte 5mg/2ml", "28/2/2027", "x5"),
+      makeVliItem_("Tubulures 3 voies", "1/7/2026", "x100"),
+      makeVliItem_("Tegaderm*", "25/1/2027", "x100"),
+      makeVliItem_("Trinitrine 0,30mg", "31/3/2027", "x1"),
+      makeVliItem_("Morphine 10mg/1ml", "31/1/2028", "x20"),
+      makeVliItem_("Oramorph 30mg/5ml", "31/5/2027", "x20")
+    ]
+  }
+];
+
+// =============================================
+// === VLI 2 — CIS Les Herbiers (images 4/5/6) ===
+// =============================================
+const VENDEE_VLI2_FORM = [
   {
     section: "POCHETTE PERFUSION (ROUGE)",
     items: [
@@ -48,8 +410,8 @@ const VENDEE_VLI_FORM = [
       makeVliItem_("Garrot adulte", "/", "x1"),
       makeVliItem_("Compresses stériles 7,5 x 7,5 cm", "31/8/2029", "x3"),
       makeVliItem_("Chlorhexidine alcoolique 40ml", "31/3/2027", "x1"),
-      makeVliItem_("NaCl 0,9 % 100 ml", "30/5/2026", "x2"),
-      makeVliItem_("Tégaderm", "25/1/2027", "x2"),
+      makeVliItem_("NaCl 0,9 % 100 ml", "1/3/2027", "x2"),
+      makeVliItem_("Tégaderm", "25/5/2026", "x2"),
       makeVliItem_("Tubulure 3 voies", "1/7/2026", "x1"),
       makeVliItem_("Régulateur de débit", "19/8/2028", "x1"),
       makeVliItem_("Règlette EVA adulte, enfant", "/", "x1+1"),
@@ -75,7 +437,7 @@ const VENDEE_VLI_FORM = [
       makeVliItem_("Seringue 20 cc luer lock (G30% / dilution amiodarone pédiatrique)", "31/1/2027", "x2"),
       makeVliItem_("Seringue sous-cutanée 1 cc (adrénaline pédiatrique)", "31/10/2028", "x2"),
       makeVliItem_("Aiguille IV", "31/8/2029", "x2"),
-      makeVliItem_("Aiguille à prélèvement", "28/2/2027", "x2"),
+      makeVliItem_("Aiguille à prélèvement", "28/6/2029", "x2"),
       makeVliItem_("Aiguille IM", "31/5/2027", "x2"),
       makeVliItem_("Aiguille IM obèse", "30/4/2028", "x1"),
       makeVliItem_("Paracétamol® IV 1 g", "31/3/2027", "x1"),
@@ -84,18 +446,18 @@ const VENDEE_VLI_FORM = [
       makeVliItem_("EPPI 1 ml", "28/2/2027", "x4"),
       makeVliItem_("Trinitrine 0,30 mg", "31/3/2027", "x1"),
       makeVliItem_("Acide tranexamique 0,5 g / 5 ml", "31/5/2027", "x4"),
-      makeVliItem_("Furosémide 20 mg / 2 ml", "30/12/1899", "x4"),
+      makeVliItem_("Furosémide 20 mg / 2 ml", "1/9/2026", "x4"),
       makeVliItem_("Paracétamol® IV 500 mg", "31/1/2027", "x1"),
-      makeVliItem_("Patch Lidocaïne prilocaïne", "30/102026", "x2"),
+      makeVliItem_("Patch Lidocaïne prilocaïne", "30/10/2026", "x2"),
       makeVliItem_("Glucose 30% 10 ml", "31/7/2026", "x4"),
-      makeVliItem_("Diazépam 10 mg / 2 ml", "31/12/2026", "x2"),
+      makeVliItem_("Diazépam 10 mg / 2 ml", "31/7/2026", "x2"),
       makeVliItem_("Canule rectale", "/", "x1"),
       makeVliItem_("Glucose 5% 20 ml (dilution cordarone pédiatrique)", "28/2/2028", "x2"),
       makeVliItem_("Amiodarone 150 mg / 3 ml", "30/9/2026", "x3"),
       makeVliItem_("Adrénaline 5 mg / 5 ml", "31/7/2026", "x4"),
       makeVliItem_("Adrénaline 1 mg / 1 ml", "30/10/2026", "x2"),
-      makeVliItem_("Paracétamol® lyoc 250 mg", "28/2/2026", "x1"),
-      makeVliItem_("Paracétamol® lyoc 500 mg", "31/1/2028", "x1"),
+      makeVliItem_("Paracétamol® lyoc 250 mg", "28/4/2028", "x1"),
+      makeVliItem_("Paracétamol® lyoc 500 mg", "31/1/2027", "x1"),
       makeVliItem_("EPPI 10 ml", "30/11/2026", "x2")
     ]
   },
@@ -103,7 +465,7 @@ const VENDEE_VLI_FORM = [
     section: "AMPOULIER STUPÉFIANTS — CÔTÉ ORAMORPH",
     items: [
       makeVliItem_("Ampoule Oramorph 30 mg / 5 ml", "30/5/2027", "x4"),
-      makeVliItem_("Seringue 5 cc", "28/2/2029", "x2"),
+      makeVliItem_("Seringue 5 cc", "31/12/2027", "x2"),
       makeVliItem_("Aiguille à prélèvement", "28/2/2027", "x2"),
       makeVliItem_("Aiguille IV", "28/2/2027", "x2")
     ]
@@ -115,21 +477,21 @@ const VENDEE_VLI_FORM = [
       makeVliItem_("Ampoule NaCl 0,9% 10 ml", "31/8/2027", "x2"),
       makeVliItem_("Seringue 10 cc", "28/2/2029", "x2"),
       makeVliItem_("Aiguille IV", "28/2/2027", "x2"),
-      makeVliItem_("Aiguille à prélèvement", "30/6/2029", "x2"),
+      makeVliItem_("Aiguille à prélèvement", "30/6/2028", "x2"),
       makeVliItem_("Ampoule Naloxone 0,4 mg / 1 ml", "30/4/2027", "x1")
     ]
   },
   {
     section: "POCHETTE PANSEMENTS (VERTE)",
     items: [
-      makeVliItem_("Bande 5 cm", "juin-30", "x1"),
+      makeVliItem_("Bande 5 cm", "30/6/2030", "x1"),
       makeVliItem_("Bande 10 cm", "30/11/2030", "x1"),
       makeVliItem_("Couverture de survie", "/", "x2"),
       makeVliItem_("Dakin 60 ml", "30/9/2026", "x1"),
       makeVliItem_("Dosette Dacryosérum", "30/11/2026", "x5"),
-      makeVliItem_("NaCl 0,9% dosette 45 ml", "30/6/2026", "x2"),
+      makeVliItem_("NaCl 0,9% dosette 45 ml", "1/2/2028", "x2"),
       makeVliItem_("Paire de ciseaux JESCO", "/", "x1"),
-      makeVliItem_("Pansement américain stérile", "30/11/2029", "x2"),
+      makeVliItem_("Pansement américain stérile", "30/11/2027", "x2"),
       makeVliItem_("Sparadrap", "/", "x1"),
       makeVliItem_("Garrot tourniquet", "/", "x1"),
       makeVliItem_("Bande Tensoban 7 cm", "/", "x1"),
@@ -149,17 +511,16 @@ const VENDEE_VLI_FORM = [
       makeVliItem_("Masque chambre inhalation bébé/enfant/adulte", "/", "x1"),
       makeVliItem_("Chambre inhalation", "/", "x1"),
       makeVliItem_("Salbutamol flacon pressurisé", "31/3/2027", "x1"),
-      makeVliItem_("Canule de Guédel (petite/moyenne/grande)", "28/2/2026", "x1+1+1"),
+      makeVliItem_("Canule de Guédel (petite/moyenne/grande)", "28/2/2025", "x1+1+1"),
       makeVliItem_("Sonde d'aspiration 8ch & 10ch", "31/8/2029", "x1+1")
     ]
   },
   {
     section: "POCHETTE SOLUTÉS (NOIRE)",
     items: [
-      makeVliItem_("Compresses stériles 7,5 x 7,5 cm", "31/11/2028", "x3"),
       makeVliItem_("NaCl 0,9% 500 ml", "28/2/2027", "x2"),
       makeVliItem_("Tubulure 3 voies", "1/7/2026", "x2"),
-      makeVliItem_("NaCl 0,9% 100 ml", "31/5/2026", "x1"),
+      makeVliItem_("NaCl 0,9% 100 ml", "1/3/2027", "x1"),
       makeVliItem_("Glucosé 10% 500 ml", "31/3/2028", "x1"),
       makeVliItem_("Seringue 50 cc luer lock (G10% pédiatrique)", "1/6/2029", "x1")
     ]
@@ -187,13 +548,7 @@ const VENDEE_VLI_FORM = [
     items: [
       makeVliItem_("Rouleau poche poubelle jaune", "/", "x1"),
       makeVliItem_("Boite à DASRI", "/", "x1"),
-      makeVliItem_("Kit infectieux (combinaison, masques, lunettes)", "/", "x1")
-    ]
-  },
-  {
-    section: "COMPARTIMENT HAUT INTÉRIEUR SAC",
-    items: [
-      makeVliItem_("Ampoulier morphinique", "/", "x1")
+      makeVliItem_("Kit infectieux (combinaison, masque chir, masque FFP)", "/", "x1")
     ]
   },
   {
@@ -203,11 +558,52 @@ const VENDEE_VLI_FORM = [
     ]
   },
   {
+    section: "COMPARTIMENT HAUT INTÉRIEUR SAC",
+    items: [
+      makeVliItem_("Ampoulier morphinique", "/", "x1")
+    ]
+  },
+  // === POCHETTES VLI 02 (image 5) ===
+  {
+    section: "RÉSERVE ISP",
+    items: [
+      makeVliItem_("Paracétamol IV 1g", "1/3/2027", "x1"),
+      makeVliItem_("Paracétamol IV 500mg", "1/1/2027", "x1"),
+      makeVliItem_("NaCl 0,9% 100ml", "1/3/2027", "x2"),
+      makeVliItem_("Tubulures 3 voies", "1/7/2026", "x4"),
+      makeVliItem_("Tégadermes", "11/10/2026", "x4"),
+      makeVliItem_("Chlorhexidine Alcoolique 2%", "1/3/2027", "x1"),
+      makeVliItem_("Garrot", "/", "x1"),
+      makeVliItem_("Paquet Compresses", "30/5/2028", "x4"),
+      makeVliItem_("Cathéter 18 G", "1/3/2028", "x2"),
+      makeVliItem_("Cathéter 20 G", "1/8/2028", "x2"),
+      makeVliItem_("Kits de prélèvements", "31/4/2026", "x1"),
+      makeVliItem_("Sachets 10 électrodes ECG", "4/8/2026", "x1"),
+      makeVliItem_("Masque aérosol Adulte", "30/6/2026", "x1"),
+      makeVliItem_("Capteur Sat° Ped", "1/1/2028", "x1")
+    ]
+  },
+  {
     section: "RÉSERVE ISP — KIT CYANOKIT",
     items: [
-      makeVliItem_("Cyanokit 5 g", "31/12/2025", "x2"),
-      makeVliItem_("NaCl 0,9% 250 ml", "30/6/2025", "x1"),
-      makeVliItem_("Seringue 50 ml", "31/10/2025", "x1")
+      makeVliItem_("Cyanokit 5 g", "31/6/2028", "x2"),
+      makeVliItem_("NaCl 0,9% 250 ml", "1/2/2027", "x1"),
+      makeVliItem_("Aiguille à prélèvement", "1/11/2026", "x1"),
+      makeVliItem_("Seringue de 50 cc", "1/8/2029", "x1")
+    ]
+  },
+  {
+    section: "RÉSERVE ISP — KIT BRULSTOP",
+    items: [
+      makeVliItem_("Compresses imprégnées PETIT", "30/5/2027", "x2"),
+      makeVliItem_("Compresses imprégnées MOYEN", "28/6/2027", "x2"),
+      makeVliItem_("Compresses imprégnées GRAND", "28/2/2028", "x2")
+    ]
+  },
+  {
+    section: "RÉSERVE ISP — HemoCue",
+    items: [
+      makeVliItem_("Microcuvettes", "3/3/2027", "x1 boîte")
     ]
   },
   {
@@ -224,36 +620,6 @@ const VENDEE_VLI_FORM = [
     ]
   },
   {
-    section: "RÉSERVE ISP — KIT DAMAGE CONTROL",
-    items: [
-      makeVliItem_("Pansement compressif d'urgence", "27/6/2029", "x5")
-    ]
-  },
-  {
-    section: "RÉSERVE ISP — SAC PS",
-    items: [
-      makeVliItem_("BAVU UU adulte", "9/5/2027", "x1"),
-      makeVliItem_("BAVU UU péd.", "26/4/2026", "x1"),
-      makeVliItem_("Masque HC adulte", "30/4/2029", "x1"),
-      makeVliItem_("Masque HC péd.", "31/10/2026", "x1"),
-      makeVliItem_("Bouteille O2 B5", "31/5/2029", "x1")
-    ]
-  },
-  {
-    section: "RÉSERVE ISP — KIT BRULSTOP",
-    items: [
-      makeVliItem_("Compresses imprégnées PETIT", "30/5/2027", "x2"),
-      makeVliItem_("Compresses imprégnées MOYEN", "28/2/2028", "x2"),
-      makeVliItem_("Compresses imprégnées GRAND", "28/2/2028", "x2")
-    ]
-  },
-  {
-    section: "RÉSERVE ISP — HemoCue",
-    items: [
-      makeVliItem_("Microcuvettes", "3/3/2027", "x1 boîte")
-    ]
-  },
-  {
     section: "RÉSERVE ISP — KIT ASPI",
     items: [
       makeVliItem_("Réceptacle aspi mucosité", "9/3/2028", "x1"),
@@ -265,7 +631,24 @@ const VENDEE_VLI_FORM = [
     items: [
       makeVliItem_("Patch DSA", "29/5/2027", "x1"),
       makeVliItem_("Capteur Sat° péd", "1/9/2025", "x1"),
-      makeVliItem_("Poche 10 électrodes", "4/8/2025", "x1")
+      makeVliItem_("Poche 10 électrodes", "1/8/2026", "x1")
+    ]
+  },
+  {
+    section: "RÉSERVE ISP — KIT DAMAGE CONTROL",
+    items: [
+      makeVliItem_("Pansement compressif d'urgence", "27/6/2029", "x5")
+    ]
+  },
+  {
+    section: "RÉSERVE ISP — SAC PS",
+    items: [
+      makeVliItem_("BAVU UU adulte", "9/5/2027", "x1"),
+      makeVliItem_("BAVU UU péd.", "1/6/2028", "x1"),
+      makeVliItem_("Masque HC adulte", "30/4/2029", "x1"),
+      makeVliItem_("Masque HC péd.", "31/10/2026", "x1"),
+      makeVliItem_("Collier cervical adulte+enfant", "/", "x1+1"),
+      makeVliItem_("Bouteille O2 B5", "31/5/2029", "x1")
     ]
   },
   {
@@ -276,81 +659,105 @@ const VENDEE_VLI_FORM = [
       makeVliItem_("SHA (avant véhicule)", "31/8/2025", "x1")
     ]
   },
+  // === PHARMACIE VLI 02 (image 6) ===
   {
     section: "PÉREMPTION PHARMACIE",
     items: [
-      makeVliItem_("Acide tranexamique 0,5 mg/5 ml", "30/11/2025", "x5"),
-      makeVliItem_("Adrénaline 1 mg/1 ml", "31/12/2025", "x5"),
-      makeVliItem_("Adrénaline 5 mg/5 ml", "31/3/2026", "x25"),
+      makeVliItem_("Acide tranexamique 0,5m/5ml", "30/11/2025", "x5"),
+      makeVliItem_("Adrénaline 1mg/1ml", "31/12/2025", "x5"),
+      makeVliItem_("Adrénaline 5mg/5ml", "31/3/2026", "x25"),
       makeVliItem_("Aiguilles à prélèvement", "1/6/2029", "x100"),
       makeVliItem_("Aiguilles IM", "31/5/2027", "x10"),
       makeVliItem_("Aiguilles IM (obèse)", "31/1/2026", "x10"),
       makeVliItem_("Aiguilles IV", "31/1/2026", "x5"),
-      makeVliItem_("Amiodarone 150 mg/3 ml", "30/9/2026", "x20"),
+      makeVliItem_("Amiodarone 150mg/3ml", "30/9/2026", "x20"),
       makeVliItem_("Bactiseptic", "30/10/2026", "x20"),
+      makeVliItem_("Bandelettes glycémie", "/", "Réappro CS"),
+      makeVliItem_("Bandes 5 cm et 10cm", "/", "Réappro CS"),
       makeVliItem_("Bon de réapprovisionnement pharmacie", "/", "Commande GLPI"),
       makeVliItem_("Canule rectale", "30/6/2026", "x2"),
+      makeVliItem_("Canule de guédel", "/", "/"),
       makeVliItem_("Capteur SpO² pédiatrique", "1/4/2026", "x20"),
       makeVliItem_("Cathéter 16G", "1/3/2028", "x5"),
       makeVliItem_("Cathéter 18G", "31/8/2028", "x50"),
       makeVliItem_("Cathéter 20G", "31/1/2029", "x50"),
       makeVliItem_("Cathéter 22G", "1/7/2028", "x10"),
       makeVliItem_("Cathéter 24G", "1/1/2027", "x5"),
+      makeVliItem_("Chambre d'inhalation Vortex*", "/", "x0"),
       makeVliItem_("Champs non stériles", "30/4/2027", "x20"),
-      makeVliItem_("Clonazépam 1 mg/1 ml", "31/3/2028", "x4"),
+      makeVliItem_("Clonazépam 1mg/1ml", "31/3/2028", "x4"),
+      makeVliItem_("Compresses stériles", "/", "50 (Réappro CS)"),
+      makeVliItem_("Container à aiguilles", "/", "Réappro CS"),
+      makeVliItem_("Couverture de survie", "/", "Réappro CS"),
+      makeVliItem_("Couvre thermomètre (Tempaset*)", "/", "Réappro CS"),
       makeVliItem_("Dacryosérum", "30/4/2026", "x5"),
-      makeVliItem_("Diazépam 10 mg/2 ml", "31/7/2026", "x6"),
+      makeVliItem_("Dakin", "/", "Réappro CS"),
+      makeVliItem_("Diazépam 10mg/2ml", "31/7/2026", "x6"),
       makeVliItem_("Électrodes DSA T7", "31/10/2027", "x5"),
-      makeVliItem_("EPPI 1 ml", "/", "x4"),
-      makeVliItem_("EPPI 10 ml", "31/8/2025", "x5"),
+      makeVliItem_("Électrodes multiparamètres", "4/8/2025 (180) / 6/1/2026 (20)", "x200"),
+      makeVliItem_("EPPI 1ml", "/", "x4"),
+      makeVliItem_("EPPI 10ml", "31/3/2025", "x5"),
       makeVliItem_("Fiche intervention SSSM", "/", "x200"),
-      makeVliItem_("Furosémide 20 mg/2 ml", "28/2/2026", "x5"),
+      makeVliItem_("Furosémide 20mg/2ml", "28/2/2026", "x5"),
       makeVliItem_("Garrot adulte", "/", "x10"),
-      makeVliItem_("Glucose 10% 500 ml", "31/1/2026", "x2"),
-      makeVliItem_("Glucose 30% 10 ml", "31/1/2026", "x10"),
-      makeVliItem_("Glucose 5% 20 ml", "31/7/2025", "x1"),
-      makeVliItem_("Ipratropium unidose 0,25 mg", "28/2/2027", "x20"),
-      makeVliItem_("Ipratropium unidose 0,50 mg", "31/3/2027", "x10"),
+      makeVliItem_("Glucose 10% 500ml", "31/1/2026", "x2"),
+      makeVliItem_("Glucose 30% 10ml", "31/1/2026", "x10"),
+      makeVliItem_("Glucose 5% 20ml", "31/7/2025", "x1"),
+      makeVliItem_("Ipratropium unidose 0,25mg", "28/2/2027", "x20"),
+      makeVliItem_("Ipratropium unidose 0,50mg", "31/3/2027", "x10"),
+      makeVliItem_("Kit risques infectieux ISP", "/", "x1"),
       makeVliItem_("Lancettes glycémie", "/", "Réappro CS"),
       makeVliItem_("Lidocaïne Prilocaïne patch", "31/10/2026", "x10"),
       makeVliItem_("Masque aérosol adulte", "1/6/2026", "x5"),
       makeVliItem_("Masque aérosol enfant", "1/2/2027", "x5"),
+      makeVliItem_("Masque chambre d'inhalation Vortex*", "28/2/2029", "/"),
       makeVliItem_("Masques chirurgicaux", "28/2/2029", "x50"),
-      makeVliItem_("NaCl 0,9% 10 ml", "31/8/2027", "x50"),
-      makeVliItem_("NaCl 0,9% 45 ml", "31/8/2027", "x2 (Réappro CS)"),
-      makeVliItem_("NaCl 0,9% 100 ml", "30/5/2026", "x120"),
-      makeVliItem_("NaCl 0,9% 500 ml", "30/11/2025", "x10"),
-      makeVliItem_("Naloxone 0,40 mg/1 ml", "30/9/2026", "x1"),
+      makeVliItem_("NaCl 0,9% 10ml", "31/8/2027", "x50"),
+      makeVliItem_("NaCl 0,9% 45ml", "31/8/2027", "x2 (Réappro CS)"),
+      makeVliItem_("NaCl 0,9% 100ml", "30/5/2026", "x120"),
+      makeVliItem_("NaCl 0,9% 500ml", "30/11/2025", "x10"),
+      makeVliItem_("Naloxone 0,40mg/1ml", "30/9/2026", "x1"),
       makeVliItem_("Paire de gants", "/", "1 S, M, L (Réappro CS)"),
-      makeVliItem_("Paracétamol adulte 1000 mg/100 ml", "31/3/2026", "x50"),
-      makeVliItem_("Paracétamol enfant 500 mg/50 ml", "/", "x5"),
+      makeVliItem_("Pansements Américains stériles", "/", "/"),
+      makeVliItem_("Paracétamol adulte 1000mg/100ml", "31/3/2026", "x50"),
+      makeVliItem_("Paracétamol enfant 500mg/50ml", "8/7/2025 (2) / 30/4/2026 (3)", "x5"),
       makeVliItem_("Paralyoc 250 mg", "28/2/2026", "1 boîte"),
-      makeVliItem_("Paralyoc 500 mg", "30/6/2027", "10 boîtes"),
+      makeVliItem_("Paralyoc 500mg", "30/6/2027", "10 boîtes"),
       makeVliItem_("Plateau de soin", "/", "x30"),
       makeVliItem_("Poches DASRI jaunes", "/", "Réappro CS"),
       makeVliItem_("Rasoir", "/", "Réappro CS"),
-      makeVliItem_("Régulateur de débit", "/", "x2"),
+      makeVliItem_("Régulateur de débit", "9/2/2026 (1) / 19/8/2028 (1)", "x2"),
       makeVliItem_("Salbutamol flacon pressurisé", "31/10/2026", "x2"),
-      makeVliItem_("Salbutamol unidose enfant 2,5 mg/2,5 ml", "31/10/2025", "x10"),
-      makeVliItem_("Seringue 1 cc sous-cutanée", "31/10/2028", "x2"),
-      makeVliItem_("Seringue 5 cc Luer Lock", "28/2/2029", "x15"),
-      makeVliItem_("Seringue 10 cc Luer", "31/8/2028", "x20"),
-      makeVliItem_("Seringue 10 cc Luer Lock", "1/2/2029", "x30"),
-      makeVliItem_("Seringue 20 cc Luer Lock", "31/7/2028", "x5"),
-      makeVliItem_("Seringue 50 cc Luer Lock", "30/6/2026", "x2"),
+      makeVliItem_("Salbutamol unidose enfant 2,5mg/2,5ml", "31/10/2025", "x10"),
+      makeVliItem_("Seringue 1cc sous cutanée", "31/10/2028", "x2"),
+      makeVliItem_("Seringue 5cc Luer Lock", "28/2/2029", "x15"),
+      makeVliItem_("Seringue 10cc Luer", "28/2/2029", "x30"),
+      makeVliItem_("Seringue 10cc Luer Lock", "1/2/2029", "x30"),
+      makeVliItem_("Seringue 20cc Luer Lock", "31/7/2028", "x5"),
+      makeVliItem_("Seringue 50cc Luer Lock", "30/6/2026", "x2"),
       makeVliItem_("Sonde aspiration 8ch", "31/12/2027", "x1"),
       makeVliItem_("Sonde aspiration 10 ch", "31/12/2027", "x1"),
-      makeVliItem_("Tensoban 7 cm", "/", "x2"),
-      makeVliItem_("Terbutaline unidose adulte 5 mg/2 ml", "28/2/2027", "x5"),
+      makeVliItem_("Solution hydro-alcoolique", "/", "Réappro CS"),
+      makeVliItem_("Sparadrap", "/", "/"),
+      makeVliItem_("Tensoban® 7cm", "/", "x2"),
+      makeVliItem_("Terbutaline unidose adulte 5mg/2ml", "28/2/2027", "x5"),
       makeVliItem_("Tubulures 3 voies", "31/7/2026", "x100"),
-      makeVliItem_("Tegaderm", "25/1/2027", "x100"),
-      makeVliItem_("Trinitrine 0,30 mg", "31/3/2027", "x1"),
-      makeVliItem_("Morphine 10 mg/1 ml", "31/5/2027", "x20"),
-      makeVliItem_("Oramorph 30 mg/5 ml", "31/5/2027", "x20"),
-      makeVliItem_("Kit risques infectieux ISP", "/", "x1")
+      makeVliItem_("Tegaderm*", "25/1/2027", "x100"),
+      makeVliItem_("Trinitrine 0,30mg", "31/3/2027", "x1"),
+      makeVliItem_("Morphine 10mg/1ml", "31/5/2027", "x20"),
+      makeVliItem_("Oramorph 30mg/5ml", "31/5/2027", "x20")
     ]
   }
 ];
+
+// Mapping : quel formulaire pour quel sac
+const VENDEE_VLI_FORMS = {
+  "VLI 1": VENDEE_VLI1_FORM,
+  "VLI 2": VENDEE_VLI2_FORM
+};
+
+// Compatibilité - ancien nom (fallback VLI 1)
+const VENDEE_VLI_FORM = VENDEE_VLI1_FORM;
 
 function setupVendeeVli_() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -369,32 +776,40 @@ function setupVendeeVli_() {
     inv.appendRow([VENDEE_VLI_CATEGORY, bag, "", "", "green", "", "", "", "", "", "Actif", "", idx + 1]);
   });
 
-  // Feuilles Contenu_*
+  // Feuilles Contenu_* — supprimer les anciennes
   ss.getSheets().forEach(s => {
-    if (s.getName().startsWith("Contenu ") && s.getName() !== "Contenu VLI") {
+    const sn = s.getName();
+    if (sn.startsWith("Contenu ") && sn !== "Contenu VLI 1" && sn !== "Contenu VLI 2") {
       ss.deleteSheet(s);
     }
   });
 
-  let content = ss.getSheetByName("Contenu VLI");
-  if (!content) content = ss.insertSheet("Contenu VLI");
-  content.clearContents();
-  content.appendRow(["Section", "Item", "Type", "Def", "Position"]);
+  // Créer une feuille Contenu par VLI avec les DLU spécifiques
+  let totalRows = 0;
+  VENDEE_VLI_BAGS.forEach(bagName => {
+    const sheetName = "Contenu " + bagName;   // "Contenu VLI 1" / "Contenu VLI 2"
+    let content = ss.getSheetByName(sheetName);
+    if (!content) content = ss.insertSheet(sheetName);
+    content.clearContents();
+    content.appendRow(["Section", "Item", "Type", "Def", "Position"]);
 
-  const rows = [];
-  VENDEE_VLI_FORM.forEach(sec => {
-    (sec.items || []).forEach(it => {
-      rows.push([sec.section, it.name, it.type, it.def, sec.position || ""]);
+    const form = VENDEE_VLI_FORMS[bagName] || VENDEE_VLI1_FORM;
+    const rows = [];
+    form.forEach(sec => {
+      (sec.items || []).forEach(it => {
+        rows.push([sec.section, it.name, it.type, it.def, sec.position || ""]);
+      });
     });
-  });
 
-  if (rows.length) {
-    content.getRange(2, 1, rows.length, 5).setValues(rows);
-  }
+    if (rows.length) {
+      content.getRange(2, 1, rows.length, 5).setValues(rows);
+    }
+    totalRows += rows.length;
+  });
 
   loadFormStructures();
   invalidateCache_();
-  return { success: true, items: rows.length };
+  return { success: true, items: totalRows };
 }
 
 function doGet(e) {
@@ -486,7 +901,7 @@ function setup() {
 }
 
 function ensureVendeeVli_() {
-  if (SCRIPT_PROP.getProperty("INIT_VENDEE_VLI")) return;
+  if (SCRIPT_PROP.getProperty("INIT_VENDEE_VLI_V2")) return;
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const conf = ss.getSheetByName(SHEET_NAMES.CONFIG);
   const inv = ss.getSheetByName(SHEET_NAMES.INVENTORY);
@@ -499,8 +914,10 @@ function ensureVendeeVli_() {
 
   if (!hasVliOnly || !hasVliBag) {
     setupVendeeVli_();
-    SCRIPT_PROP.setProperty("INIT_VENDEE_VLI", "1");
   }
+  // Toujours regénérer les feuilles Contenu pour les DLU à jour
+  setupVendeeVli_();
+  SCRIPT_PROP.setProperty("INIT_VENDEE_VLI_V2", "1");
 }
 
 // --- DATA FETCHING (Chargement des données) ---
@@ -1753,4 +2170,57 @@ function getSacReserveContent_() {
       { name: "Kit aérosol enfant (1)", type: "case", def: "true" }
     ]}
   ];
+}
+
+// =============================================
+// === TRAÇABILITÉ INTERVENTIONS VLI ===
+// =============================================
+const INTERVENTIONS_SHEET = "Interventions_VLI";
+
+function ensureInterventionsSheet_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(INTERVENTIONS_SHEET);
+  if (!sheet) {
+    sheet = ss.insertSheet(INTERVENTIONS_SHEET);
+    sheet.appendRow(["Date", "ISP", "CIS", "Commune", "N_Inter", "VLI", "Horodatage"]);
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
+}
+
+function saveVliIntervention(data) {
+  try {
+    if (!data || !data.date || !data.isp || !data.cis || !data.commune || !data.numInter || !data.vli) {
+      return { success: false, error: "Tous les champs sont obligatoires." };
+    }
+    const sheet = ensureInterventionsSheet_();
+    const horodatage = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm:ss");
+    sheet.appendRow([data.date, data.isp, data.cis, data.commune, data.numInter, data.vli, horodatage]);
+    invalidateCache_();
+    return { success: true };
+  } catch (e) {
+    Logger.log("Erreur saveVliIntervention: " + e);
+    return { success: false, error: e.toString() };
+  }
+}
+
+function getVliInterventions() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName(INTERVENTIONS_SHEET);
+    if (!sheet || sheet.getLastRow() < 2) return [];
+    const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 7).getValues();
+    return data.map(r => ({
+      date: r[0] ? Utilities.formatDate(new Date(r[0]), Session.getScriptTimeZone(), "dd/MM/yyyy") : String(r[0]),
+      isp: r[1],
+      cis: r[2],
+      commune: r[3],
+      numInter: r[4],
+      vli: r[5],
+      horodatage: r[6]
+    })).reverse();
+  } catch (e) {
+    Logger.log("Erreur getVliInterventions: " + e);
+    return [];
+  }
 }
