@@ -1,6 +1,6 @@
 // ******************************************************************************************
 // ****************************** CODE.GS (BACKEND) *****************************************
-// Version 1.9.15 - 18/02/2026 - MAJ backend (QR déplacé vers popup)
+// Version 1.9.17 - 03/03/2026 - Fix boucle récursive + dates invalides
 // ******************************************************************************************
 
 // --- CONFIGURATION ---
@@ -23,10 +23,14 @@ function normalizeDlu_(value) {
   if (!s || s === "/" || s === "-") return "";
   const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (!m) return "";
-  const d = m[1].padStart(2, "0");
-  const mo = m[2].padStart(2, "0");
-  const y = m[3];
-  return `${y}-${mo}-${d}`;
+  const day = parseInt(m[1], 10);
+  const month = parseInt(m[2], 10);
+  const year = parseInt(m[3], 10);
+  if (month < 1 || month > 12) return "";
+  // Clamper le jour au dernier jour valide du mois (ex: 31 fév -> 28 fév)
+  const lastDay = new Date(year, month, 0).getDate();
+  const d = Math.min(day, lastDay);
+  return `${year}-${String(month).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 }
 
 function makeVliItem_(name, dlu, qty) {
@@ -852,8 +856,8 @@ function setupVendeeVli_() {
     totalRows += rows.length;
   });
 
-  loadFormStructures();
-  invalidateCache_();
+  if (typeof loadFormStructures === 'function') loadFormStructures();
+  // Ne PAS appeler invalidateCache_ ici pour éviter recursion
   return { success: true, items: totalRows };
 }
 
@@ -882,12 +886,22 @@ function getAppUrl() {
 // --- BOOTSTRAP (data + photos + mileages) with short cache ---
 function getBootstrapData() {
   // Version simple et robuste: cache court uniquement (pas de snapshot persistant)
-  const cache = CacheService.getScriptCache();
-  const cached = cache.get("BOOTSTRAP_V1");
-  if (cached) return JSON.parse(cached);
-  const payload = rebuildBootstrapSnapshot_();
-  if (payload) cache.put("BOOTSTRAP_V1", JSON.stringify(payload), 5);
-  return payload;
+  try {
+    const cache = CacheService.getScriptCache();
+    const cached = cache.get("BOOTSTRAP_V1");
+    if (cached) return JSON.parse(cached);
+    const payload = rebuildBootstrapSnapshot_();
+    try {
+      if (payload) cache.put("BOOTSTRAP_V1", JSON.stringify(payload), 300);
+    } catch(cacheErr) {
+      Logger.log("Cache put error (payload trop gros?): " + cacheErr);
+    }
+    return payload;
+  } catch(e) {
+    Logger.log("getBootstrapData error: " + e);
+    // Fallback direct sans cache
+    return rebuildBootstrapSnapshot_();
+  }
 }
 
 // Reconstruire les feuilles Contenu en batch (setValues, pas appendRow)
@@ -963,10 +977,14 @@ function setup() {
 
 function ensureVendeeVli_() {
   if (!SCRIPT_PROP.getProperty("INIT_VENDEE_VLI_V3")) {
+    // Poser le flag AVANT le setup pour éviter une boucle récursive
+    // (setupVendeeVli_ -> invalidateCache_ -> getData -> ensureVendeeVli_)
+    SCRIPT_PROP.setProperty("INIT_VENDEE_VLI_V3", "1");
     try {
       setupVendeeVli_();
-      SCRIPT_PROP.setProperty("INIT_VENDEE_VLI_V3", "1");
     } catch (e) {
+      // En cas d'erreur, retirer le flag pour réessayer au prochain appel
+      SCRIPT_PROP.deleteProperty("INIT_VENDEE_VLI_V3");
       Logger.log("Erreur ensureVendeeVli_: " + e);
     }
   }
@@ -1005,14 +1023,9 @@ function getData() {
     if (!SCRIPT_PROP.getProperty("INIT_V3_CLEANUP")) { cleanupCategories_(ss); SCRIPT_PROP.setProperty("INIT_V3_CLEANUP", "1"); }
     if (!SCRIPT_PROP.getProperty("INIT_V4_REMOVE_DEFAULTS")) { removeAutoDefaultBags_(ss); SCRIPT_PROP.setProperty("INIT_V4_REMOVE_DEFAULTS", "1"); }
     if (!SCRIPT_PROP.getProperty("INIT_V5_ORDER")) { initializeInventoryOrder_(ss); SCRIPT_PROP.setProperty("INIT_V5_ORDER", "1"); }
-    // Charger les formulaires depuis les feuilles Contenu_* (si la fonction existe)
-    if (typeof initializeForms === 'function') {
-      initializeForms();
-    } else if (typeof loadFormStructures === 'function') {
-      loadFormStructures();
-    } else {
-      Logger.log("initializeForms introuvable: formulaires non rechargés.");
-    }
+    // FORMS_JSON est déjà en ScriptProperties. Les VLI sont injectés depuis les constantes + VLI_BASE_DATES.
+    // Pas besoin de relire les feuilles Contenu_* à chaque appel (très lent).
+    // initializeForms() / loadFormStructures() ne sont appelés qu'au setup initial.
     
     // 1. Config
     const confSheet = ss.getSheetByName(SHEET_NAMES.CONFIG);
@@ -2040,7 +2053,9 @@ function saveVliMileage(bagName, km, dateStr) {
 function invalidateCache_() {
   try {
     CacheService.getScriptCache().remove("BOOTSTRAP_V1");
-    rebuildBootstrapSnapshot_();
+    // NE PAS appeler rebuildBootstrapSnapshot_() ici !
+    // Ca créait une boucle infinie: invalidateCache_ -> rebuild -> getData -> ensureVendeeVli_ -> setupVendeeVli_ -> invalidateCache_ -> ...
+    // Le cache sera reconstruit automatiquement au prochain appel de getBootstrapData()
   } catch (e) {
     Logger.log("Cache invalidate error: " + e.toString());
   }

@@ -586,7 +586,7 @@
           document.getElementById('error-box').style.display = 'block';
           document.getElementById('tech-error').innerText = "Délai dépassé. Vérifiez votre connexion ou les permissions du script.";
         }
-      }, 15000);
+      }, 30000);
 
       window.onload = function() { 
         google.script.run.withSuccessHandler(u => { APP_URL=u; loadData(); }).withFailureHandler(fail).getAppUrl(); 
@@ -1853,6 +1853,6 @@
         }).updateVliImpactComment(fileId, c);
       }
     </script>
-    <div style="text-align:center; padding:8px; font-size:0.7em; color:#aaa;">v1.9.16 — 02/03/2026</div>
+    <div style="text-align:center; padding:8px; font-size:0.7em; color:#aaa;">v1.9.17 — 03/03/2026</div>
   </body>
 </html>
