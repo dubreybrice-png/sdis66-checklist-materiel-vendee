@@ -2206,7 +2206,8 @@ function getVliInterventions() {
     if (!sheet || sheet.getLastRow() < 2) return [];
     const tz = Session.getScriptTimeZone();
     const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 7).getValues();
-    return data.map(r => ({
+    return data.map((r, i) => ({
+      rowIndex: i + 2,
       date: r[0] instanceof Date ? Utilities.formatDate(r[0], tz, "dd/MM/yyyy")
            : r[0] ? Utilities.formatDate(new Date(r[0]), tz, "dd/MM/yyyy")
            : "",
@@ -2221,5 +2222,19 @@ function getVliInterventions() {
   } catch (e) {
     Logger.log("Erreur getVliInterventions: " + e);
     return [];
+  }
+}
+
+function deleteVliIntervention(rowIndex) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName(INTERVENTIONS_SHEET);
+    if (!sheet) return { success: false, error: "Feuille introuvable." };
+    if (rowIndex < 2 || rowIndex > sheet.getLastRow()) return { success: false, error: "Ligne invalide." };
+    sheet.deleteRow(rowIndex);
+    return { success: true };
+  } catch (e) {
+    Logger.log("Erreur deleteVliIntervention: " + e);
+    return { success: false, error: e.toString() };
   }
 }

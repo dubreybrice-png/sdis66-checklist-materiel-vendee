@@ -411,9 +411,10 @@
         <div class="admin-card">
           <h3 style="margin-top:0; color:#1976d2;">🚑 Traçabilité d'intervention secteur VLI</h3>
           <p style="color:#666; margin-bottom:15px;">Historique de toutes les interventions enregistrées en secteur VLI.</p>
-          <div style="margin-bottom:15px;">
+          <div style="margin-bottom:15px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
             <button class="admin-btn" onclick="openInterventionModal()" style="background:linear-gradient(135deg,#1976d2,#1565c0); color:#fff;">+ Nouvelle intervention</button>
             <button class="admin-btn secondary" onclick="renderInterventionsTab()" style="margin-left:8px;">🔄 Rafraîchir</button>
+            <div id="interventions-stat" style="margin-left:auto; background:linear-gradient(135deg,#e3f2fd,#bbdefb); padding:8px 16px; border-radius:20px; font-weight:600; color:#1565c0; font-size:0.95em; display:none;">🚑 0 intervention(s)</div>
           </div>
           <div style="overflow-x:auto;">
             <table style="width:100%; border-collapse:collapse; font-size:0.92em;">
@@ -426,10 +427,11 @@
                   <th style="padding:10px; text-align:left;">N° d'inter</th>
                   <th style="padding:10px; text-align:left;">VLI</th>
                   <th style="padding:10px; text-align:left;">Horodatage</th>
+                  <th style="padding:10px; text-align:center; width:50px;">🗑️</th>
                 </tr>
               </thead>
               <tbody id="interventions-body">
-                <tr><td colspan="7" style="text-align:center; padding:20px; color:#999;">Cliquez sur "Rafraîchir" pour charger les données.</td></tr>
+                <tr><td colspan="8" style="text-align:center; padding:20px; color:#999;">Cliquez sur "Rafraîchir" pour charger les données.</td></tr>
               </tbody>
             </table>
           </div>
@@ -1733,16 +1735,23 @@
 
       function renderInterventionsTab() {
         const body = document.getElementById('interventions-body');
+        const stat = document.getElementById('interventions-stat');
         if (!body) return;
-        body.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px;">⏳ Chargement...</td></tr>';
+        body.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px;">⏳ Chargement...</td></tr>';
+        if (stat) { stat.style.display = 'none'; }
         google.script.run.withSuccessHandler(list => {
+          if (stat) {
+            stat.style.display = 'inline-block';
+            var n = list ? list.length : 0;
+            stat.textContent = '🚑 ' + n + ' intervention' + (n > 1 ? 's' : '');
+          }
           if (!list || list.length === 0) {
-            body.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:#999;">Aucune intervention enregistrée.</td></tr>';
+            body.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px; color:#999;">Aucune intervention enregistrée.</td></tr>';
             return;
           }
           let html = '';
           list.forEach(r => {
-            html += `<tr>
+            html += `<tr style="border-bottom:1px solid var(--border-color);">
               <td style="padding:8px 10px;">${r.date || ''}</td>
               <td style="padding:8px 10px;">${r.isp || ''}</td>
               <td style="padding:8px 10px;">${r.cis || ''}</td>
@@ -1750,12 +1759,24 @@
               <td style="padding:8px 10px;">${r.numInter || ''}</td>
               <td style="padding:8px 10px;">${r.vli || ''}</td>
               <td style="padding:8px 10px; font-size:0.85em; color:#999;">${r.horodatage || ''}</td>
+              <td style="padding:8px 10px; text-align:center;"><button onclick="deleteIntervention(${r.rowIndex})" title="Supprimer" style="background:none; border:none; cursor:pointer; font-size:1.2em; color:#c62828; padding:2px 6px; border-radius:4px; transition:background .2s;" onmouseover="this.style.background='#ffebee'" onmouseout="this.style.background='none'">✕</button></td>
             </tr>`;
           });
           body.innerHTML = html;
         }).withFailureHandler(err => {
-          body.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:#c62828;">Erreur: ' + err + '</td></tr>';
+          body.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px; color:#c62828;">Erreur: ' + err + '</td></tr>';
         }).getVliInterventions();
+      }
+
+      function deleteIntervention(rowIndex) {
+        if (!confirm('⚠️ Supprimer cette intervention ?')) return;
+        google.script.run
+          .withSuccessHandler(function(r) {
+            if (r && r.success) { renderInterventionsTab(); }
+            else { alert('❌ Erreur: ' + (r ? r.error : 'inconnue')); }
+          })
+          .withFailureHandler(function(err) { alert('❌ Erreur serveur: ' + (err.message || err)); })
+          .deleteVliIntervention(rowIndex);
       }
 
       function openVliImpact(name) {
