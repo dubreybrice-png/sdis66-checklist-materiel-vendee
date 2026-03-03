@@ -226,7 +226,7 @@
         <p id="tech-error">Le serveur ne répond pas.</p>
         <button class="header-btn" style="background:#d32f2f; margin: 0 auto;" onclick="forceReload()">🔄 Recharger l'application</button>
       </div>
-      <div style="font-size:0.65em; color:#bbb; margin-top:12px;">v1.9.27</div>
+      <div style="font-size:0.65em; color:#bbb; margin-top:12px;">v1.9.28</div>
     </div>
 
     <div class="top-header">
@@ -613,8 +613,10 @@
 
     <script>
       // === SPLASH & MODE — défini AVANT tout CDN pour garantir que les boutons marchent ===
-      function chooseMobile() { localStorage.setItem('checklistMode','mobile'); document.body.classList.add('mobile-mode'); document.getElementById('splashChoice').style.display='none'; showModeStrip('mobile'); }
-      function chooseDesktop() { localStorage.setItem('checklistMode','desktop'); document.body.classList.remove('mobile-mode'); document.getElementById('splashChoice').style.display='none'; showModeStrip('desktop'); }
+      function _safeSetMode(v){ try { localStorage.setItem('checklistMode', v); } catch(_) {} }
+      function _safeGetMode(){ try { return localStorage.getItem('checklistMode'); } catch(_) { return null; } }
+      function chooseMobile() { _safeSetMode('mobile'); document.body.classList.add('mobile-mode'); document.getElementById('splashChoice').style.display='none'; showModeStrip('mobile'); }
+      function chooseDesktop() { _safeSetMode('desktop'); document.body.classList.remove('mobile-mode'); document.getElementById('splashChoice').style.display='none'; showModeStrip('desktop'); }
       function switchMode(m) { if(m==='mobile') chooseMobile(); else chooseDesktop(); }
       function showModeStrip(m) {
         var s = document.getElementById('modeStrip'); s.style.display='block';
@@ -622,11 +624,13 @@
       }
       function forceReload() { location.reload(); }
       // Auto-restore mode from localStorage
-      (function(){ var s=localStorage.getItem('checklistMode'); if(s==='mobile'||s==='desktop'){document.getElementById('splashChoice').style.display='none';showModeStrip(s);if(s==='mobile')document.body.classList.add('mobile-mode');} })();
+      (function(){ var s=_safeGetMode(); if(s==='mobile'||s==='desktop'){document.getElementById('splashChoice').style.display='none';showModeStrip(s);if(s==='mobile')document.body.classList.add('mobile-mode');} })();
     </script>
     <script>
+      window.__APP_STARTED__ = true;
       let D = {}; let APP_URL = ""; let CURR = null; let CURR_PHOTO_CATEGORY = null; let CURR_PHOTO_BAG = null; let CURR_PHOTO_SECTION = null; let CURR_PHOTO_FILE_ID = null; let IS_ADM = false;
-      let SORT_MODE = localStorage.getItem('sortMode') || 'num';
+      let SORT_MODE = 'num';
+      try { SORT_MODE = localStorage.getItem('sortMode') || 'num'; } catch(_) { SORT_MODE = 'num'; }
       let PHOTO_META_BY_BAG = {};
       let MODAL_OPEN_TIME = null;
       var QR_BAG_PARAM = null;
@@ -634,8 +638,6 @@
         var _usp = new URLSearchParams(window.location.search || '');
         QR_BAG_PARAM = _usp.get('bag');
       } catch(qe) { QR_BAG_PARAM = null; }
-
-      window.__APP_STARTED__ = true;
 
       function _step(t) { var el=document.getElementById('load-step'); if(el) el.textContent=t; console.log('[LOAD] '+t); }
 
@@ -1969,6 +1971,6 @@
         }).updateVliImpactComment(fileId, c);
       }
     </script>
-    <div style="text-align:center; padding:8px; font-size:0.7em; color:#aaa;">v1.9.27 — 03/03/2026</div>
+    <div style="text-align:center; padding:8px; font-size:0.7em; color:#aaa;">v1.9.28 — 03/03/2026</div>
   </body>
 </html>
