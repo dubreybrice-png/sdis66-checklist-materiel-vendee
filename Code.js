@@ -1,6 +1,6 @@
 // ******************************************************************************************
 // ****************************** CODE.GS (BACKEND) *****************************************
-// Version 1.9.19 - 03/03/2026 - Items VLI : case présence + DLU séparée
+// Version 1.9.20 - 03/03/2026 - Fix DLU migration + case presence
 // ******************************************************************************************
 
 // --- CONFIGURATION ---
@@ -763,30 +763,87 @@ const VENDEE_VLI_FORMS = {
 
 const VLI_BASE_DATES_KEY = "VLI_BASE_DATES_V1";
 
+// Helper: store large JSON across multiple ScriptProperties (9KB limit per key)
+function setLargeProperty_(keyPrefix, obj) {
+  const json = JSON.stringify(obj);
+  const CHUNK_SIZE = 8000; // Leave room for key name overhead
+  const chunks = [];
+  for (let i = 0; i < json.length; i += CHUNK_SIZE) {
+    chunks.push(json.substring(i, i + CHUNK_SIZE));
+  }
+  // Store chunk count
+  SCRIPT_PROP.setProperty(keyPrefix + "_N", String(chunks.length));
+  for (let i = 0; i < chunks.length; i++) {
+    SCRIPT_PROP.setProperty(keyPrefix + "_" + i, chunks[i]);
+  }
+  // Clean up old single-key format and excess chunks
+  SCRIPT_PROP.deleteProperty(keyPrefix);
+  for (let i = chunks.length; i < 20; i++) {
+    SCRIPT_PROP.deleteProperty(keyPrefix + "_" + i);
+  }
+}
+
+function getLargeProperty_(keyPrefix) {
+  const nStr = SCRIPT_PROP.getProperty(keyPrefix + "_N");
+  if (nStr) {
+    const n = parseInt(nStr, 10);
+    let json = "";
+    for (let i = 0; i < n; i++) {
+      json += (SCRIPT_PROP.getProperty(keyPrefix + "_" + i) || "");
+    }
+    return json ? JSON.parse(json) : {};
+  }
+  // Fallback: try old single-key format
+  const raw = SCRIPT_PROP.getProperty(keyPrefix);
+  if (raw) return JSON.parse(raw);
+  return {};
+}
+
 function ensureVliBaseDates_() {
   let base = {};
   try {
-    const raw = SCRIPT_PROP.getProperty(VLI_BASE_DATES_KEY);
-    if (raw) base = JSON.parse(raw);
+    base = getLargeProperty_(VLI_BASE_DATES_KEY);
   } catch(e) {
     base = {};
   }
 
-  let changed = false;
+  // Migration: old keys (itemName → date) → new keys (itemName__dlu → date)
+  let migrated = false;
+  Object.keys(base).forEach(bagName => {
+    if (typeof base[bagName] !== 'object') return;
+    Object.keys(base[bagName]).forEach(key => {
+      if (!key.endsWith("__dlu")) {
+        const val = base[bagName][key];
+        // Only migrate if the value looks like a date (YYYY-MM-DD)
+        if (/^\d{4}-\d{2}-\d{2}$/.test(val)) {
+          const newKey = key + "__dlu";
+          if (base[bagName][newKey] === undefined) {
+            base[bagName][newKey] = val;
+            migrated = true;
+          }
+        }
+        delete base[bagName][key];
+        migrated = true;
+      }
+    });
+  });
+
+  let changed = migrated;
   VENDEE_VLI_BAGS.forEach(bagName => {
     if (!base[bagName]) { base[bagName] = {}; changed = true; }
     const form = VENDEE_VLI_FORMS[bagName] || [];
     form.forEach(sec => {
       (sec.items || []).forEach(it => {
-        if (base[bagName][it.name] === undefined) {
-          base[bagName][it.name] = it.def || "";
+        const dluKey = it.name + "__dlu";
+        if (base[bagName][dluKey] === undefined && it.dlu) {
+          base[bagName][dluKey] = it.dlu;
           changed = true;
         }
       });
     });
   });
 
-  if (changed) SCRIPT_PROP.setProperty(VLI_BASE_DATES_KEY, JSON.stringify(base));
+  if (changed) setLargeProperty_(VLI_BASE_DATES_KEY, base);
   return base;
 }
 
@@ -1023,14 +1080,13 @@ function ensureVendeeVli_() {
       });
       // Migrer VLI_BASE_DATES clés
       try {
-        const raw = SCRIPT_PROP.getProperty(VLI_BASE_DATES_KEY);
-        if (raw) {
-          const base = JSON.parse(raw);
+        const base = getLargeProperty_(VLI_BASE_DATES_KEY);
+        if (base && Object.keys(base).length) {
           let changed = false;
           Object.keys(renames).forEach(old => {
             if (base[old]) { base[renames[old]] = base[old]; delete base[old]; changed = true; }
           });
-          if (changed) SCRIPT_PROP.setProperty(VLI_BASE_DATES_KEY, JSON.stringify(base));
+          if (changed) setLargeProperty_(VLI_BASE_DATES_KEY, base);
         }
       } catch(e) { Logger.log("Erreur migration VLI_BASE_DATES: " + e); }
       Logger.log("V4: VLI renommées avec succès");
@@ -1290,7 +1346,7 @@ function saveCheck(bagName, formData, nextItemName, nextItemDate, verifierName, 
         }
       });
       if (datesUpdated) {
-        SCRIPT_PROP.setProperty(VLI_BASE_DATES_KEY, JSON.stringify(base));
+        setLargeProperty_(VLI_BASE_DATES_KEY, base);
         Logger.log("DLU mises à jour pour " + bagName + " (" + Object.keys(formData).length + " items analysés)");
       }
     } catch (dluErr) {
