@@ -165,7 +165,45 @@
     </style>
   </head>
   <body>
-    <script>(function(){var m=localStorage.getItem('checklistMode');if(m==='mobile')document.body.classList.add('mobile-mode');})();</script>
+    <script>
+      (function(){
+        var m = localStorage.getItem('checklistMode');
+        if (m === 'mobile') document.body.classList.add('mobile-mode');
+
+        // Failsafe global: ne jamais rester bloqué sans message
+        window.__APP_STARTED__ = false;
+        window.addEventListener('error', function(ev){
+          try {
+            var sp = document.getElementById('splashChoice'); if (sp) sp.style.display = 'none';
+            var ld = document.getElementById('global-loader'); if (ld) ld.style.display = 'flex';
+            var eb = document.getElementById('error-box'); if (eb) eb.style.display = 'block';
+            var te = document.getElementById('tech-error'); if (te) te.innerText = 'Erreur JS: ' + (ev && ev.message ? ev.message : 'inconnue');
+          } catch(_) {}
+        });
+        window.addEventListener('unhandledrejection', function(ev){
+          try {
+            var sp = document.getElementById('splashChoice'); if (sp) sp.style.display = 'none';
+            var ld = document.getElementById('global-loader'); if (ld) ld.style.display = 'flex';
+            var eb = document.getElementById('error-box'); if (eb) eb.style.display = 'block';
+            var te = document.getElementById('tech-error');
+            var reason = (ev && ev.reason) ? (ev.reason.message || String(ev.reason)) : 'promise rejetée';
+            if (te) te.innerText = 'Erreur async: ' + reason;
+          } catch(_) {}
+        });
+
+        setTimeout(function(){
+          if (!window.__APP_STARTED__) {
+            try {
+              var sp = document.getElementById('splashChoice'); if (sp) sp.style.display = 'none';
+              var ld = document.getElementById('global-loader'); if (ld) ld.style.display = 'flex';
+              var eb = document.getElementById('error-box'); if (eb) eb.style.display = 'block';
+              var te = document.getElementById('tech-error'); if (te) te.innerText = 'Le script principal ne démarre pas (initialisation JS bloquée).';
+              var ls = document.getElementById('load-step'); if (ls) ls.textContent = 'Crash avant démarrage principal';
+            } catch(_) {}
+          }
+        }, 8000);
+      })();
+    </script>
 
     <div id="splashChoice">
       <div style="font-size:50px;">📋</div>
@@ -188,7 +226,7 @@
         <p id="tech-error">Le serveur ne répond pas.</p>
         <button class="header-btn" style="background:#d32f2f; margin: 0 auto;" onclick="forceReload()">🔄 Recharger l'application</button>
       </div>
-      <div style="font-size:0.65em; color:#bbb; margin-top:12px;">v1.9.25</div>
+      <div style="font-size:0.65em; color:#bbb; margin-top:12px;">v1.9.26</div>
     </div>
 
     <div class="top-header">
@@ -592,7 +630,12 @@
       let PHOTO_META_BY_BAG = {};
       let MODAL_OPEN_TIME = null;
       var QR_BAG_PARAM = null;
-      try { QR_BAG_PARAM = <?!= bagParam ? JSON.stringify(bagParam) : 'null' ?>; } catch(qe) {}
+      try {
+        var _usp = new URLSearchParams(window.location.search || '');
+        QR_BAG_PARAM = _usp.get('bag');
+      } catch(qe) { QR_BAG_PARAM = null; }
+
+      window.__APP_STARTED__ = true;
 
       function _step(t) { var el=document.getElementById('load-step'); if(el) el.textContent=t; console.log('[LOAD] '+t); }
 
@@ -1928,6 +1971,6 @@
     </script>
     <script async src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <script async src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <div style="text-align:center; padding:8px; font-size:0.7em; color:#aaa;">v1.9.25 — 03/03/2026</div>
+    <div style="text-align:center; padding:8px; font-size:0.7em; color:#aaa;">v1.9.26 — 03/03/2026</div>
   </body>
 </html>
