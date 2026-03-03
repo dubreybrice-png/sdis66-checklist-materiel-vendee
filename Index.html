@@ -226,7 +226,7 @@
         <p id="tech-error">Le serveur ne répond pas.</p>
         <button class="header-btn" style="background:#d32f2f; margin: 0 auto;" onclick="forceReload()">🔄 Recharger l'application</button>
       </div>
-      <div style="font-size:0.65em; color:#bbb; margin-top:12px;">v1.9.28</div>
+      <div style="font-size:0.65em; color:#bbb; margin-top:12px;">v1.9.29</div>
     </div>
 
     <div class="top-header">
@@ -1645,9 +1645,18 @@
       
       function addItem(b) { b.parentElement.previousElementSibling.innerHTML += `<div class="item-row"><span style="cursor:move; color:#999;">⋮⋮</span><input placeholder="Item" style="flex:1;"><select><option value="texte">Texte</option><option value="case">Case</option><option value="nombre">Nombre</option><option value="date">Date</option></select><input placeholder="Défaut" style="width:80px;"><input class="i-dlu" type="date" value="" placeholder="DLU" style="width:130px;" title="Date de péremption" disabled><label style="font-size:0.75rem; white-space:nowrap; display:flex; align-items:center; gap:2px;" title="Pas de date de péremption"><input type="checkbox" class="i-no-dlu" checked onchange="this.closest('.item-row').querySelector('.i-dlu').disabled=this.checked; if(this.checked) this.closest('.item-row').querySelector('.i-dlu').value='';">∅ DLU</label><button class="admin-btn danger" style="padding:5px 8px;" onclick="this.parentElement.remove()">✕</button><button class="admin-btn secondary" style="padding:5px 8px;" onclick="quickSaveEditor()">💾</button></div>`; }
       function addSection() { document.getElementById('editor-container').innerHTML += `<div class="section-block"><div class="section-header"><span style="cursor:move; padding:5px; color:var(--text-color);">☰</span><input value="Nouvelle Section" style="flex:1;"><input placeholder="Pos" style="width:120px;"></div><div class="items-list"></div><div style="padding:10px; background:var(--section-bg);"><button class="admin-btn secondary" onclick="addItem(this)">+ Item</button></div></div>`; }
-      function showQR(n) { const u = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(APP_URL + "?bag=" + n)}`; document.getElementById('qrTitle').innerText = n; document.getElementById('qr-img').src = u; document.getElementById('qrModal').style.display = 'flex'; }
+      function showQR(n) {
+        var u = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(APP_URL + '?bag=' + n);
+        document.getElementById('qrTitle').innerText = n;
+        document.getElementById('qr-img').src = u;
+        document.getElementById('qrModal').style.display = 'flex';
+      }
       function downloadQR() { window.open(document.getElementById('qr-img').src); }
-      function printQR() { let w = window.open(''); w.document.write(`<img src="${document.getElementById('qr-img').src}" onload="window.print()">`); }
+      function printQR() {
+        var w = window.open('');
+        var src = document.getElementById('qr-img').src;
+        w.document.write('<img src="' + src + '" onload="window.print()">');
+      }
       function openHistoryDetail(idx) { 
         const h = D.history[idx]; 
         // Extraire et supprimer le temps de vérification du champ details
@@ -1971,6 +1980,6 @@
         }).updateVliImpactComment(fileId, c);
       }
     </script>
-    <div style="text-align:center; padding:8px; font-size:0.7em; color:#aaa;">v1.9.28 — 03/03/2026</div>
+    <div style="text-align:center; padding:8px; font-size:0.7em; color:#aaa;">v1.9.29 — 03/03/2026</div>
   </body>
 </html>

@@ -1,6 +1,6 @@
 // ******************************************************************************************
 // ****************************** CODE.GS (BACKEND) *****************************************
-// Version 1.9.28 - 03/03/2026 - Harden startup: __APP_STARTED immediate + safe localStorage
+// Version 1.9.29 - 03/03/2026 - Fix QR JS parsing corruption (remove template literals around src/https)
 // ******************************************************************************************
 
 // --- CONFIGURATION ---
