@@ -182,11 +182,13 @@
     <div id="global-loader">
       <div class="spinner"></div>
       <div style="font-weight:bold;">Chargement...</div>
+      <div id="load-step" style="font-size:0.8em; color:#888; margin-top:8px;">Initialisation...</div>
       <div id="error-box">
         <h3 style="margin-top:0;">⚠️ Problème technique</h3>
         <p id="tech-error">Le serveur ne répond pas.</p>
         <button class="header-btn" style="background:#d32f2f; margin: 0 auto;" onclick="forceReload()">🔄 Recharger l'application</button>
       </div>
+      <div style="font-size:0.65em; color:#bbb; margin-top:12px;">v1.9.23</div>
     </div>
 
     <div class="top-header">
@@ -584,67 +586,95 @@
       // Auto-restore mode from localStorage
       (function(){ var s=localStorage.getItem('checklistMode'); if(s==='mobile'||s==='desktop'){document.getElementById('splashChoice').style.display='none';showModeStrip(s);if(s==='mobile')document.body.classList.add('mobile-mode');} })();
     </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script>
       let D = {}; let APP_URL = ""; let CURR = null; let CURR_PHOTO_CATEGORY = null; let CURR_PHOTO_BAG = null; let CURR_PHOTO_SECTION = null; let CURR_PHOTO_FILE_ID = null; let IS_ADM = false;
       let SORT_MODE = localStorage.getItem('sortMode') || 'num';
       let PHOTO_META_BY_BAG = {};
-      let MODAL_OPEN_TIME = null; // Timestamp d'ouverture du modal de vérification
-      const QR_BAG_PARAM = <?!= bagParam ? JSON.stringify(bagParam) : 'null' ?>; // Paramètre bag du QR code
+      let MODAL_OPEN_TIME = null;
+      var QR_BAG_PARAM = null;
+      try { QR_BAG_PARAM = <?!= bagParam ? JSON.stringify(bagParam) : 'null' ?>; } catch(qe) {}
 
-      // Anti-chargement infini : timeout de 30s
-      const loaderTimeout = setTimeout(() => {
-        if(document.getElementById('global-loader').style.display !== 'none'){
+      function _step(t) { var el=document.getElementById('load-step'); if(el) el.textContent=t; console.log('[LOAD] '+t); }
+
+      // Anti-chargement infini : timeout de 20s
+      var _loadDone = false;
+      var loaderTimeout = setTimeout(function() {
+        if(!_loadDone){
           var sp = document.getElementById('splashChoice'); if(sp) sp.style.display='none';
+          var ld = document.getElementById('global-loader'); if(ld) ld.style.display='flex';
           document.getElementById('error-box').style.display = 'block';
-          document.getElementById('tech-error').innerText = "Délai dépassé (30s). Le serveur ne répond pas.";
+          document.getElementById('tech-error').innerText = "Délai dépassé (20s). Étape: " + (document.getElementById('load-step')||{}).textContent;
         }
-      }, 30000);
+      }, 20000);
 
-      window.onload = function() { 
-        google.script.run.withSuccessHandler(u => { APP_URL=u; loadData(); }).withFailureHandler(fail).getAppUrl(); 
-      };
+      _step('Scripts CDN chargés, attente DOM...');
+
+      function _startApp() {
+        if(_startApp._done) return; _startApp._done = true;
+        _step('DOM prêt, appel getAppUrl...');
+        try {
+          google.script.run
+            .withSuccessHandler(function(u) { APP_URL=u; _step('URL reçue, appel getBootstrapData...'); loadData(); })
+            .withFailureHandler(function(e) { _step('ERREUR getAppUrl'); fail(e); })
+            .getAppUrl();
+        } catch(ex) {
+          _step('CRASH démarrage: ' + ex);
+          fail({message: 'Crash démarrage: ' + ex.toString()});
+        }
+      }
+      _startApp._done = false;
+
+      // Double déclenchement : DOMContentLoaded + window.onload (le premier qui arrive lance l'app)
+      document.addEventListener('DOMContentLoaded', _startApp);
+      window.addEventListener('load', _startApp);
 
       function fail(e) { 
-        // Cacher le splash pour montrer l'erreur
+        _loadDone = true;
+        clearTimeout(loaderTimeout);
         var sp = document.getElementById('splashChoice'); if(sp) sp.style.display='none';
-        document.getElementById('global-loader').style.display = 'flex';
+        var ld = document.getElementById('global-loader'); if(ld) ld.style.display='flex';
         document.getElementById('error-box').style.display = 'block'; 
-        document.getElementById('tech-error').innerText = e.message || e.toString();
+        document.getElementById('tech-error').innerText = (e && e.message) ? e.message : String(e);
         console.error('FAIL:', e);
       }
 
       function loadData() {
-        google.script.run.withSuccessHandler(res => {
+        _step('getBootstrapData en cours...');
+        google.script.run.withSuccessHandler(function(res) {
           try {
-            console.log("getBootstrapData response:", res);
+            _step('Données reçues, traitement...');
             if (res && res.success) {
               D = res.data;
               D.photoPresence = res.photoPresence || {};
               D.vliMileages = res.vliMileages || {};
+              _step('Rendu en cours...');
               safeRender();
 
+              _loadDone = true;
               clearTimeout(loaderTimeout);
               document.getElementById('global-loader').style.display = 'none';
+              _step('Terminé');
 
               try {
                 if(QR_BAG_PARAM) {
-                  const item = D.inventory.find(i => i.name === QR_BAG_PARAM);
+                  var item = D.inventory.find(function(i){ return i.name === QR_BAG_PARAM; });
                   if(item) {
                     if(item.state === 'HS') alert("Ce bag est marqué Hors Service (HS)");
-                    else setTimeout(() => openCheck(item), 300);
+                    else setTimeout(function(){ openCheck(item); }, 300);
                   } else alert("Bag introuvable: " + QR_BAG_PARAM);
                 }
-              } catch(qrErr) { console.error('QR_BAG_PARAM error:', qrErr); }
+              } catch(qrErr) { console.error('QR error:', qrErr); }
             } else { fail({message: res ? res.error : "Pas de réponse du serveur"}); }
           } catch(loadErr) {
-            console.error('loadData handler crash:', loadErr);
+            console.error('loadData crash:', loadErr);
+            _loadDone = true;
             clearTimeout(loaderTimeout);
             document.getElementById('global-loader').style.display = 'none';
-            alert('Erreur de chargement: ' + loadErr.message);
+            alert('Erreur chargement: ' + loadErr.message);
           }
-        }).withFailureHandler(fail).getBootstrapData();
+        }).withFailureHandler(function(e) { _step('ERREUR serveur'); fail(e); }).getBootstrapData();
       }
 
       function safeRender() {
@@ -1896,6 +1926,6 @@
         }).updateVliImpactComment(fileId, c);
       }
     </script>
-    <div style="text-align:center; padding:8px; font-size:0.7em; color:#aaa;">v1.9.22 — 03/03/2026</div>
+    <div style="text-align:center; padding:8px; font-size:0.7em; color:#aaa;">v1.9.23 — 03/03/2026</div>
   </body>
 </html>
