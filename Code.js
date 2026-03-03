@@ -1,6 +1,6 @@
 // ******************************************************************************************
 // ****************************** CODE.GS (BACKEND) *****************************************
-// Version 1.9.18 - 03/03/2026 - Fix boucle récursive + dates invalides
+// Version 1.9.19 - 03/03/2026 - Items VLI : case présence + DLU séparée
 // ******************************************************************************************
 
 // --- CONFIGURATION ---
@@ -35,7 +35,8 @@ function normalizeDlu_(value) {
 
 function makeVliItem_(name, dlu, qty) {
   const q = (qty || qty === 0) ? ` (${qty})` : "";
-  return { name: `${name}${q}`, type: "date", def: normalizeDlu_(dlu) };
+  const normalizedDlu = normalizeDlu_(dlu);
+  return { name: `${name}${q}`, type: "case", def: "true", dlu: normalizedDlu };
 }
 
 // =============================================
@@ -765,7 +766,8 @@ const VLI_BASE_DATES_KEY = "VLI_BASE_DATES_V1";
 function ensureVliBaseDates_() {
   let base = {};
   try {
-    base = JSON.parse(SCRIPT_PROP.getProperty(VLI_BASE_DATES_KEY) || "{}");
+    const raw = SCRIPT_PROP.getProperty(VLI_BASE_DATES_KEY);
+    if (raw) base = JSON.parse(raw);
   } catch(e) {
     base = {};
   }
@@ -795,11 +797,19 @@ function buildVliFormsWithBaseDates_(base) {
     out[bagName] = form.map(sec => ({
       section: sec.section,
       position: sec.position || "",
-      items: (sec.items || []).map(it => ({
-        name: it.name,
-        type: it.type,
-        def: (base && base[bagName] && base[bagName][it.name] !== undefined) ? base[bagName][it.name] : (it.def || "")
-      }))
+      items: (sec.items || []).map(it => {
+        // DLU override from VLI_BASE_DATES (keyed by itemName__dlu)
+        const dluKey = it.name + "__dlu";
+        const dluVal = (base && base[bagName] && base[bagName][dluKey] !== undefined)
+          ? base[bagName][dluKey]
+          : (it.dlu || "");
+        return {
+          name: it.name,
+          type: it.type,
+          def: it.def || "true",
+          dlu: dluVal
+        };
+      })
     }));
   });
   return out;
@@ -1269,11 +1279,14 @@ function saveCheck(bagName, formData, nextItemName, nextItemDate, verifierName, 
       const base = ensureVliBaseDates_();
       if (!base[bagName]) base[bagName] = {};
       let datesUpdated = false;
-      Object.keys(formData).forEach(itemName => {
-        const newVal = (formData[itemName] || "").toString().trim();
-        if (/^\d{4}-\d{2}-\d{2}$/.test(newVal) && base[bagName][itemName] !== newVal) {
-          base[bagName][itemName] = newVal;
-          datesUpdated = true;
+      Object.keys(formData).forEach(key => {
+        // Les DLU sont envoyées avec le suffixe __dlu
+        if (key.endsWith("__dlu")) {
+          const newVal = (formData[key] || "").toString().trim();
+          if (/^\d{4}-\d{2}-\d{2}$/.test(newVal) && base[bagName][key] !== newVal) {
+            base[bagName][key] = newVal;
+            datesUpdated = true;
+          }
         }
       });
       if (datesUpdated) {
@@ -1828,11 +1841,14 @@ function updateCategoryContent(catName, dataJson) {
     if(row.position) groups[row.section].position = row.position;
     
     if(row.item) {
-      groups[row.section].items.push({
+      const itemObj = {
         name: row.item,
         type: row.type,
         def: row.def
-      });
+      };
+      // Conserver la DLU si fournie
+      if (row.dlu !== undefined) itemObj.dlu = row.dlu;
+      groups[row.section].items.push(itemObj);
     }
   });
   

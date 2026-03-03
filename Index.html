@@ -737,7 +737,15 @@
               let h = `<div class="check-zone"><div class="check-zone-header"><span>${sec.section}</span><div class="zone-pos-container">${sealedCheckbox}${photoIcon}${p}</div></div><div class="check-zone-content" data-section="${secIdx}">`;
               sec.items.forEach(it => {
                  let f = ""; let d = it.def || '';
-                 if(it.type == 'case') f = `<div class="form-input-container"><label class="switch"><input type="checkbox" data-id="${it.name}" data-def="${d}"><span class="slider"></span></label></div>`;
+                 if(it.type == 'case') {
+                   f = `<div class="form-input-container" style="display:flex; align-items:center; gap:8px;">`;
+                   f += `<label class="switch"><input type="checkbox" data-id="${it.name}" data-def="${d}"><span class="slider"></span></label>`;
+                   // Si l'item a une DLU (date de péremption), afficher le champ date à côté
+                   if(it.dlu) {
+                     f += `<input type="date" data-id="${it.name}__dlu" data-def="${it.dlu}" value="${it.dlu}" style="max-width:150px; font-size:0.85rem; padding:4px;">`;
+                   }
+                   f += `</div>`;
+                 }
                  else if (it.type == 'date') f = `<div class="form-input-container"><input type="date" data-id="${it.name}" data-def="${d}" value="${d}"></div>`;
                  else if (it.type == 'nombre') f = `<div class="form-input-container"><input type="number" data-id="${it.name}" data-def="${d}" placeholder="${d}"></div>`;
                  else f = `<div class="form-input-container"><input type="text" data-id="${it.name}" data-def="${d}" placeholder="${d}"></div>`;
@@ -1423,7 +1431,9 @@
              if(sec.items && sec.items.length > 0) {
                  const nbItems = sec.items.length;
                  sec.items.forEach((i, itemIdx) => {
-                    h += `<div class="item-row" data-item-idx="${itemIdx}"><span style="cursor:move; color:#999;">⋮⋮</span><input class="i-name" value="${i.name}" placeholder="Nom item" style="flex:1;"><select class="i-type"><option value="texte" ${i.type=='texte'?'selected':''}>Texte</option><option value="case" ${i.type=='case'?'selected':''}>Case</option><option value="nombre" ${i.type=='nombre'?'selected':''}>Nombre</option><option value="date" ${i.type=='date'?'selected':''}>Date</option></select><input class="i-def" value="${i.def||''}" placeholder="Défaut" style="width:80px;"><button class="admin-btn danger" style="padding:5px 8px;" onclick="deleteItemConfirm(this)">✕</button><button class="admin-btn secondary" style="padding:5px 8px;" onclick="quickSaveEditor()">💾</button></div>`;
+                    const hasDlu = i.dlu !== undefined && i.dlu !== '';
+                    const noDluChecked = (i.dlu === undefined || i.dlu === '') ? 'checked' : '';
+                    h += `<div class="item-row" data-item-idx="${itemIdx}"><span style="cursor:move; color:#999;">⋮⋮</span><input class="i-name" value="${i.name}" placeholder="Nom item" style="flex:1;"><select class="i-type"><option value="texte" ${i.type=='texte'?'selected':''}>Texte</option><option value="case" ${i.type=='case'?'selected':''}>Case</option><option value="nombre" ${i.type=='nombre'?'selected':''}>Nombre</option><option value="date" ${i.type=='date'?'selected':''}>Date</option></select><input class="i-def" value="${i.def||''}" placeholder="Défaut" style="width:80px;"><input class="i-dlu" type="date" value="${i.dlu||''}" placeholder="DLU" style="width:130px;" title="Date de péremption" ${noDluChecked ? 'disabled' : ''}><label style="font-size:0.75rem; white-space:nowrap; display:flex; align-items:center; gap:2px;" title="Pas de date de péremption"><input type="checkbox" class="i-no-dlu" ${noDluChecked} onchange="this.closest('.item-row').querySelector('.i-dlu').disabled=this.checked; if(this.checked) this.closest('.item-row').querySelector('.i-dlu').value='';">∅ DLU</label><button class="admin-btn danger" style="padding:5px 8px;" onclick="deleteItemConfirm(this)">✕</button><button class="admin-btn secondary" style="padding:5px 8px;" onclick="quickSaveEditor()">💾</button></div>`;
                  });
              }
              h += `</div><div style="padding:10px; background:var(--section-bg);"><button class="admin-btn secondary" onclick="addItem(this)">+ Item</button></div></div>`;
@@ -1511,13 +1521,16 @@
          document.querySelectorAll('.section-block').forEach(blk => {
             let s = blk.querySelector('.sec-name').value; let p = blk.querySelector('.sec-pos').value;
             blk.querySelectorAll('.item-row').forEach(row => {
-               data.push({ section: s, position: p, item: row.querySelector('input').value, type: row.querySelector('select').value, def: row.querySelectorAll('input')[1].value });
+               const noDlu = row.querySelector('.i-no-dlu');
+               const dluInput = row.querySelector('.i-dlu');
+               const dluVal = (noDlu && noDlu.checked) ? '' : (dluInput ? dluInput.value : '');
+               data.push({ section: s, position: p, item: row.querySelector('input').value, type: row.querySelector('select').value, def: row.querySelectorAll('input')[1].value, dlu: dluVal });
             });
          });
          google.script.run.withSuccessHandler(loadData).updateCategoryContent(cat, data);
       }
       
-      function addItem(b) { b.parentElement.previousElementSibling.innerHTML += `<div class="item-row"><span style="cursor:move; color:#999;">⋮⋮</span><input placeholder="Item" style="flex:1;"><select><option value="texte">Texte</option><option value="case">Case</option><option value="nombre">Nombre</option><option value="date">Date</option></select><input placeholder="Défaut" style="width:80px;"><button class="admin-btn danger" style="padding:5px 8px;" onclick="this.parentElement.remove()">✕</button><button class="admin-btn secondary" style="padding:5px 8px;" onclick="quickSaveEditor()">💾</button></div>`; }
+      function addItem(b) { b.parentElement.previousElementSibling.innerHTML += `<div class="item-row"><span style="cursor:move; color:#999;">⋮⋮</span><input placeholder="Item" style="flex:1;"><select><option value="texte">Texte</option><option value="case">Case</option><option value="nombre">Nombre</option><option value="date">Date</option></select><input placeholder="Défaut" style="width:80px;"><input class="i-dlu" type="date" value="" placeholder="DLU" style="width:130px;" title="Date de péremption" disabled><label style="font-size:0.75rem; white-space:nowrap; display:flex; align-items:center; gap:2px;" title="Pas de date de péremption"><input type="checkbox" class="i-no-dlu" checked onchange="this.closest('.item-row').querySelector('.i-dlu').disabled=this.checked; if(this.checked) this.closest('.item-row').querySelector('.i-dlu').value='';">∅ DLU</label><button class="admin-btn danger" style="padding:5px 8px;" onclick="this.parentElement.remove()">✕</button><button class="admin-btn secondary" style="padding:5px 8px;" onclick="quickSaveEditor()">💾</button></div>`; }
       function addSection() { document.getElementById('editor-container').innerHTML += `<div class="section-block"><div class="section-header"><span style="cursor:move; padding:5px; color:var(--text-color);">☰</span><input value="Nouvelle Section" style="flex:1;"><input placeholder="Pos" style="width:120px;"></div><div class="items-list"></div><div style="padding:10px; background:var(--section-bg);"><button class="admin-btn secondary" onclick="addItem(this)">+ Item</button></div></div>`; }
       function showQR(n) { const u = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(APP_URL + "?bag=" + n)}`; document.getElementById('qrTitle').innerText = n; document.getElementById('qr-img').src = u; document.getElementById('qrModal').style.display = 'flex'; }
       function downloadQR() { window.open(document.getElementById('qr-img').src); }
@@ -1853,6 +1866,6 @@
         }).updateVliImpactComment(fileId, c);
       }
     </script>
-    <div style="text-align:center; padding:8px; font-size:0.7em; color:#aaa;">v1.9.18 — 03/03/2026</div>
+    <div style="text-align:center; padding:8px; font-size:0.7em; color:#aaa;">v1.9.19 — 03/03/2026</div>
   </body>
 </html>
