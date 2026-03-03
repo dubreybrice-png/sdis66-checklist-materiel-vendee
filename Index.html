@@ -188,7 +188,7 @@
         <p id="tech-error">Le serveur ne répond pas.</p>
         <button class="header-btn" style="background:#d32f2f; margin: 0 auto;" onclick="forceReload()">🔄 Recharger l'application</button>
       </div>
-      <div style="font-size:0.65em; color:#bbb; margin-top:12px;">v1.9.23</div>
+      <div style="font-size:0.65em; color:#bbb; margin-top:12px;">v1.9.24</div>
     </div>
 
     <div class="top-header">
@@ -586,8 +586,6 @@
       // Auto-restore mode from localStorage
       (function(){ var s=localStorage.getItem('checklistMode'); if(s==='mobile'||s==='desktop'){document.getElementById('splashChoice').style.display='none';showModeStrip(s);if(s==='mobile')document.body.classList.add('mobile-mode');} })();
     </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script>
       let D = {}; let APP_URL = ""; let CURR = null; let CURR_PHOTO_CATEGORY = null; let CURR_PHOTO_BAG = null; let CURR_PHOTO_SECTION = null; let CURR_PHOTO_FILE_ID = null; let IS_ADM = false;
       let SORT_MODE = localStorage.getItem('sortMode') || 'num';
@@ -595,6 +593,16 @@
       let MODAL_OPEN_TIME = null;
       var QR_BAG_PARAM = null;
       try { QR_BAG_PARAM = <?!= bagParam ? JSON.stringify(bagParam) : 'null' ?>; } catch(qe) {}
+
+      // Chargement CDN non-bloquant (Sortable + Chart.js sont optionnels, pour admin seulement)
+      function _loadScript(url) {
+        var s = document.createElement('script');
+        s.src = url; s.async = true;
+        s.onerror = function() { console.warn('CDN failed: ' + url); };
+        document.head.appendChild(s);
+      }
+      _loadScript('https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js');
+      _loadScript('https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js');
 
       function _step(t) { var el=document.getElementById('load-step'); if(el) el.textContent=t; console.log('[LOAD] '+t); }
 
@@ -1276,6 +1284,7 @@
          
          const pieCtx = document.getElementById('pieChart');
          if(pieChartInstance) pieChartInstance.destroy();
+         if(typeof Chart === 'undefined') { pieCtx.parentElement.innerHTML = '<p style="color:#888;text-align:center;">Graphiques indisponibles (Chart.js non chargé)</p>'; return; }
          pieChartInstance = new Chart(pieCtx, {
            type: 'pie',
            data: {
@@ -1307,6 +1316,7 @@
          const sortedMonths = Object.keys(monthlyData).sort();
          const monthlyCtx = document.getElementById('monthlyChart');
          if(monthlyChartInstance) monthlyChartInstance.destroy();
+         if(typeof Chart === 'undefined') return;
          monthlyChartInstance = new Chart(monthlyCtx, {
            type: 'bar',
            data: {
@@ -1509,14 +1519,14 @@
          });
          
          // Initialiser Sortable pour les sections
-         new Sortable(c, {
+         if(typeof Sortable !== 'undefined') new Sortable(c, {
            animation: 150,
            handle: '.section-header span',
            onEnd: function() { quickSaveEditor(); }
          });
          
          // Initialiser Sortable pour chaque liste d'items
-         document.querySelectorAll('.items-list').forEach(list => {
+         if(typeof Sortable !== 'undefined') document.querySelectorAll('.items-list').forEach(list => {
            new Sortable(list, {
              animation: 150,
              handle: '.item-row span',
@@ -1670,7 +1680,7 @@
       let CAT_SORTABLE = null;
       function initInventorySortable() {
         const el = document.getElementById('inv-body');
-        if (!el || INV_SORTABLE) return;
+        if (!el || INV_SORTABLE || typeof Sortable === 'undefined') return;
         INV_SORTABLE = new Sortable(el, {
           animation: 150,
           handle: '.inv-drag',
@@ -1693,7 +1703,7 @@
       }
       function initCategorySortable() {
         const el = document.getElementById('cat-conf');
-        if (!el || CAT_SORTABLE) return;
+        if (!el || CAT_SORTABLE || typeof Sortable === 'undefined') return;
         CAT_SORTABLE = new Sortable(el, {
           animation: 150,
           handle: '.drag-handle',
@@ -1926,6 +1936,6 @@
         }).updateVliImpactComment(fileId, c);
       }
     </script>
-    <div style="text-align:center; padding:8px; font-size:0.7em; color:#aaa;">v1.9.23 — 03/03/2026</div>
+    <div style="text-align:center; padding:8px; font-size:0.7em; color:#aaa;">v1.9.24 — 03/03/2026</div>
   </body>
 </html>
