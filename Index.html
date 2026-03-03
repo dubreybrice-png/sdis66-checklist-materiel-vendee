@@ -188,7 +188,7 @@
         <p id="tech-error">Le serveur ne répond pas.</p>
         <button class="header-btn" style="background:#d32f2f; margin: 0 auto;" onclick="forceReload()">🔄 Recharger l'application</button>
       </div>
-      <div style="font-size:0.65em; color:#bbb; margin-top:12px;">v1.9.24</div>
+      <div style="font-size:0.65em; color:#bbb; margin-top:12px;">v1.9.25</div>
     </div>
 
     <div class="top-header">
@@ -593,16 +593,6 @@
       let MODAL_OPEN_TIME = null;
       var QR_BAG_PARAM = null;
       try { QR_BAG_PARAM = <?!= bagParam ? JSON.stringify(bagParam) : 'null' ?>; } catch(qe) {}
-
-      // Chargement CDN non-bloquant (Sortable + Chart.js sont optionnels, pour admin seulement)
-      function _loadScript(url) {
-        var s = document.createElement('script');
-        s.src = url; s.async = true;
-        s.onerror = function() { console.warn('CDN failed: ' + url); };
-        document.head.appendChild(s);
-      }
-      _loadScript('https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js');
-      _loadScript('https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js');
 
       function _step(t) { var el=document.getElementById('load-step'); if(el) el.textContent=t; console.log('[LOAD] '+t); }
 
@@ -1936,6 +1926,8 @@
         }).updateVliImpactComment(fileId, c);
       }
     </script>
-    <div style="text-align:center; padding:8px; font-size:0.7em; color:#aaa;">v1.9.24 — 03/03/2026</div>
+    <script async src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <script async src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <div style="text-align:center; padding:8px; font-size:0.7em; color:#aaa;">v1.9.25 — 03/03/2026</div>
   </body>
 </html>
