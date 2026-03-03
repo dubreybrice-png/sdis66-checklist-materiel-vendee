@@ -4,8 +4,6 @@
   <head>
     <base target="_top">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     
     <style>
       :root {
@@ -574,11 +572,26 @@
     </div>
 
     <script>
+      // === SPLASH & MODE — défini AVANT tout CDN pour garantir que les boutons marchent ===
+      function chooseMobile() { localStorage.setItem('checklistMode','mobile'); document.body.classList.add('mobile-mode'); document.getElementById('splashChoice').style.display='none'; showModeStrip('mobile'); }
+      function chooseDesktop() { localStorage.setItem('checklistMode','desktop'); document.body.classList.remove('mobile-mode'); document.getElementById('splashChoice').style.display='none'; showModeStrip('desktop'); }
+      function switchMode(m) { if(m==='mobile') chooseMobile(); else chooseDesktop(); }
+      function showModeStrip(m) {
+        var s = document.getElementById('modeStrip'); s.style.display='block';
+        s.innerHTML = m==='mobile' ? '📱 Mobile <a onclick="switchMode(\'desktop\')" style="color:#42a5f5;cursor:pointer;text-decoration:underline;margin-left:6px;">Passer en PC</a>' : '💻 PC <a onclick="switchMode(\'mobile\')" style="color:#42a5f5;cursor:pointer;text-decoration:underline;margin-left:6px;">Passer en mobile</a>';
+      }
+      function forceReload() { location.reload(); }
+      // Auto-restore mode from localStorage
+      (function(){ var s=localStorage.getItem('checklistMode'); if(s==='mobile'||s==='desktop'){document.getElementById('splashChoice').style.display='none';showModeStrip(s);if(s==='mobile')document.body.classList.add('mobile-mode');} })();
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
+    <script>
       let D = {}; let APP_URL = ""; let CURR = null; let CURR_PHOTO_CATEGORY = null; let CURR_PHOTO_BAG = null; let CURR_PHOTO_SECTION = null; let CURR_PHOTO_FILE_ID = null; let IS_ADM = false;
       let SORT_MODE = localStorage.getItem('sortMode') || 'num';
       let PHOTO_META_BY_BAG = {};
       let MODAL_OPEN_TIME = null; // Timestamp d'ouverture du modal de vérification
-      const QR_BAG_PARAM = <?!= bagParam ? '"' + bagParam + '"' : 'null' ?>; // Paramètre bag du QR code
+      const QR_BAG_PARAM = <?!= bagParam ? JSON.stringify(bagParam) : 'null' ?>; // Paramètre bag du QR code
 
       // Anti-chargement infini : timeout de 30s
       const loaderTimeout = setTimeout(() => {
@@ -596,7 +609,7 @@
       function fail(e) { 
         // Cacher le splash pour montrer l'erreur
         var sp = document.getElementById('splashChoice'); if(sp) sp.style.display='none';
-        document.getElementById('global-loader').style.display = 'block';
+        document.getElementById('global-loader').style.display = 'flex';
         document.getElementById('error-box').style.display = 'block'; 
         document.getElementById('tech-error').innerText = e.message || e.toString();
         console.error('FAIL:', e);
@@ -604,25 +617,43 @@
 
       function loadData() {
         google.script.run.withSuccessHandler(res => {
-          console.log("getBootstrapData response:", res);
-          if (res && res.success) {
-            D = res.data;
-            D.photoPresence = res.photoPresence || {};
-            D.vliMileages = res.vliMileages || {};
-            render();
+          try {
+            console.log("getBootstrapData response:", res);
+            if (res && res.success) {
+              D = res.data;
+              D.photoPresence = res.photoPresence || {};
+              D.vliMileages = res.vliMileages || {};
+              safeRender();
 
-            if(QR_BAG_PARAM) {
-              const item = D.inventory.find(i => i.name === QR_BAG_PARAM);
-              if(item) {
-                if(item.state === 'HS') alert("Ce bag est marqué Hors Service (HS)");
-                else setTimeout(() => openCheck(item), 300);
-              } else alert("Bag introuvable: " + QR_BAG_PARAM);
-            }
+              clearTimeout(loaderTimeout);
+              document.getElementById('global-loader').style.display = 'none';
 
+              try {
+                if(QR_BAG_PARAM) {
+                  const item = D.inventory.find(i => i.name === QR_BAG_PARAM);
+                  if(item) {
+                    if(item.state === 'HS') alert("Ce bag est marqué Hors Service (HS)");
+                    else setTimeout(() => openCheck(item), 300);
+                  } else alert("Bag introuvable: " + QR_BAG_PARAM);
+                }
+              } catch(qrErr) { console.error('QR_BAG_PARAM error:', qrErr); }
+            } else { fail({message: res ? res.error : "Pas de réponse du serveur"}); }
+          } catch(loadErr) {
+            console.error('loadData handler crash:', loadErr);
             clearTimeout(loaderTimeout);
             document.getElementById('global-loader').style.display = 'none';
-          } else { fail({message: res ? res.error : "Pas de réponse du serveur"}); }
+            alert('Erreur de chargement: ' + loadErr.message);
+          }
         }).withFailureHandler(fail).getBootstrapData();
+      }
+
+      function safeRender() {
+        try {
+          render();
+        } catch(e) {
+          console.error('RENDER ERROR:', e);
+          // Afficher quand même l'app, même si le rendu a partiellement planté
+        }
       }
 
       function render() {
@@ -713,7 +744,9 @@
         // Peupler l'éditeur avec les clés de formulaires (VLI 1, VLI 2…)
         if (D.forms) { Object.keys(D.forms).forEach(k => { sel2.innerHTML += `<option>${k}</option>`; }); }
         else { D.categoriesOrder.forEach(c => { sel2.innerHTML += `<option>${c}</option>`; }); }
-        renderAdmin(); renderStats(); renderEditor();
+        try { renderAdmin(); } catch(e) { console.error('renderAdmin error:', e); }
+        try { renderStats(); } catch(e) { console.error('renderStats error:', e); }
+        try { renderEditor(); } catch(e) { console.error('renderEditor error:', e); }
       }
 
       function openCheck(item) {
@@ -999,7 +1032,7 @@
           return (a.name||'').localeCompare(b.name||'', 'fr');
         });
         invList.forEach(i => {
-          let s = i.state === 'HS' ? `<button class="admin-btn success" onclick="setBagStatus('${i.name.replace(/'/g, "\\'")}',' Actif')">Activer</button> <button class="admin-btn danger" onclick="if(confirm('Supprimer ${i.name} ?')) delBag('${i.name.replace(/'/g, "\\'")}')">🗑️</button>` : `<button class="admin-btn secondary" onclick="setBagStatus('${i.name.replace(/'/g, "\\'")}',' HS')">HS</button> <button class="admin-btn danger" onclick="if(confirm('Supprimer ${i.name} ?')) delBag('${i.name.replace(/'/g, "\\'")}')">🗑️</button>`;
+          let s = i.state === 'HS' ? `<button class="admin-btn success" onclick="setBagStatus('${i.name.replace(/'/g, "\\'")}','Actif')">Activer</button> <button class="admin-btn danger" onclick="if(confirm('Supprimer ${i.name} ?')) delBag('${i.name.replace(/'/g, "\\'")}')">🗑️</button>` : `<button class="admin-btn secondary" onclick="setBagStatus('${i.name.replace(/'/g, "\\'")}','HS')">HS</button> <button class="admin-btn danger" onclick="if(confirm('Supprimer ${i.name} ?')) delBag('${i.name.replace(/'/g, "\\'")}')">🗑️</button>`;
           ib.innerHTML += `<tr data-bag="${i.name}" data-cat="${i.category}"><td class="inv-drag">↕</td><td class="order-cell">${i.order || ''}</td><td>${i.category}</td><td><b>${i.name}</b> <button class="admin-btn" style="padding:2px 6px; font-size:0.8rem; margin-left:5px;" onclick="renameBag('${i.name.replace(/'/g, "\\'")}')">✏️</button></td><td><input value="${i.mailOrange||''}" placeholder="mail1@test.com; mail2@test.com" data-bag="${i.name}" data-type="orange" onchange="updateMail(this)" style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:4px; background:var(--input-bg); color:var(--input-text);"></td><td><input value="${i.mailRed||''}" placeholder="mail1@test.com; mail2@test.com" data-bag="${i.name}" data-type="red" onchange="updateMail(this)" style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:4px; background:var(--input-bg); color:var(--input-text);"></td><td>${s}</td></tr>`;
         });
         const vliBody = document.getElementById('vli-loc-body');
@@ -1652,7 +1685,7 @@
         }
       }
       function saveCatConf() { let c = []; document.querySelectorAll('.cat-row').forEach(r => c.push({ name: r.querySelector('.cat-name-input').value, freq: r.querySelector('.cat-freq-input').value })); google.script.run.withSuccessHandler(loadData).updateCategoriesConfig(c); }
-      function forceReload() { location.reload(); }
+      // forceReload() est défini dans le bloc splash en haut
       
       function generatePdfForItem(itemName) {
         const hist = D.history.filter(h => h.name === itemName);
@@ -1690,15 +1723,7 @@
         setTimeout(() => w.print(), 500);
       }
 
-      // === MOBILE MODE ===
-      function chooseMobile() { localStorage.setItem('checklistMode','mobile'); document.body.classList.add('mobile-mode'); document.getElementById('splashChoice').style.display='none'; showModeStrip('mobile'); }
-      function chooseDesktop() { localStorage.setItem('checklistMode','desktop'); document.body.classList.remove('mobile-mode'); document.getElementById('splashChoice').style.display='none'; showModeStrip('desktop'); }
-      function switchMode(m) { if(m==='mobile') chooseMobile(); else chooseDesktop(); }
-      function showModeStrip(m) { 
-        var s = document.getElementById('modeStrip'); s.style.display='block'; 
-        s.innerHTML = m==='mobile' ? '📱 Mobile <a onclick="switchMode(\'desktop\')">Passer en PC</a>' : '💻 PC <a onclick="switchMode(\'mobile\')">Passer en mobile</a>'; 
-      }
-      (function(){ var s=localStorage.getItem('checklistMode'); if(s==='mobile'||s==='desktop'){document.getElementById('splashChoice').style.display='none';showModeStrip(s);if(s==='mobile')document.body.classList.add('mobile-mode');} })();
+      // === MOBILE MODE === (fonctions définies dans le bloc splash en haut du body)
 
       // === VLI IMPACT ===
       let CURR_VLI_NAME = '';
@@ -1871,6 +1896,6 @@
         }).updateVliImpactComment(fileId, c);
       }
     </script>
-    <div style="text-align:center; padding:8px; font-size:0.7em; color:#aaa;">v1.9.21 — 03/03/2026</div>
+    <div style="text-align:center; padding:8px; font-size:0.7em; color:#aaa;">v1.9.22 — 03/03/2026</div>
   </body>
 </html>

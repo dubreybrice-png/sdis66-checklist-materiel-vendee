@@ -1,6 +1,6 @@
 // ******************************************************************************************
 // ****************************** CODE.GS (BACKEND) *****************************************
-// Version 1.9.21 - 03/03/2026 - Defensive try/catch + fix splash hide on error
+// Version 1.9.22 - 03/03/2026 - Fix splash buttons + defer CDN scripts
 // ******************************************************************************************
 
 // --- CONFIGURATION ---
@@ -277,9 +277,9 @@ const VENDEE_VLI1_FORM = [
   {
     section: "RÉSERVE ISP — SCHILLER T7",
     items: [
-      makeVliItem_("Patch DSA", "29/5/1900", "x1"),
+      makeVliItem_("Patch DSA", "29/5/2026", "x1"),
       makeVliItem_("Capteur Sat° péd", "1/5/2025", "x1"),
-      makeVliItem_("Poche 10 électrodes", "1/6/1900", "x1")
+      makeVliItem_("Poche 10 électrodes", "1/6/2026", "x1")
     ]
   },
   {
@@ -966,8 +966,13 @@ function getBootstrapData() {
     return payload;
   } catch(e) {
     Logger.log("getBootstrapData error: " + e);
-    // Fallback direct sans cache
-    return rebuildBootstrapSnapshot_();
+    // Fallback direct sans cache — protégé par try/catch
+    try {
+      return rebuildBootstrapSnapshot_();
+    } catch(e2) {
+      Logger.log("getBootstrapData fallback also failed: " + e2);
+      return { success: false, error: "Erreur critique: " + e2.toString() };
+    }
   }
 }
 
