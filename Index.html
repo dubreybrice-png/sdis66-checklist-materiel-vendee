@@ -580,11 +580,12 @@
       let MODAL_OPEN_TIME = null; // Timestamp d'ouverture du modal de vérification
       const QR_BAG_PARAM = <?!= bagParam ? '"' + bagParam + '"' : 'null' ?>; // Paramètre bag du QR code
 
-      // Anti-chargement infini : timeout de 15s
+      // Anti-chargement infini : timeout de 30s
       const loaderTimeout = setTimeout(() => {
         if(document.getElementById('global-loader').style.display !== 'none'){
+          var sp = document.getElementById('splashChoice'); if(sp) sp.style.display='none';
           document.getElementById('error-box').style.display = 'block';
-          document.getElementById('tech-error').innerText = "Délai dépassé. Vérifiez votre connexion ou les permissions du script.";
+          document.getElementById('tech-error').innerText = "Délai dépassé (30s). Le serveur ne répond pas.";
         }
       }, 30000);
 
@@ -593,8 +594,12 @@
       };
 
       function fail(e) { 
+        // Cacher le splash pour montrer l'erreur
+        var sp = document.getElementById('splashChoice'); if(sp) sp.style.display='none';
+        document.getElementById('global-loader').style.display = 'block';
         document.getElementById('error-box').style.display = 'block'; 
-        document.getElementById('tech-error').innerText = e.message;
+        document.getElementById('tech-error').innerText = e.message || e.toString();
+        console.error('FAIL:', e);
       }
 
       function loadData() {
@@ -1866,6 +1871,6 @@
         }).updateVliImpactComment(fileId, c);
       }
     </script>
-    <div style="text-align:center; padding:8px; font-size:0.7em; color:#aaa;">v1.9.20 — 03/03/2026</div>
+    <div style="text-align:center; padding:8px; font-size:0.7em; color:#aaa;">v1.9.21 — 03/03/2026</div>
   </body>
 </html>

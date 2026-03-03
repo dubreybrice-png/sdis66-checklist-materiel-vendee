@@ -1,6 +1,6 @@
 // ******************************************************************************************
 // ****************************** CODE.GS (BACKEND) *****************************************
-// Version 1.9.20 - 03/03/2026 - Fix DLU migration + case presence
+// Version 1.9.21 - 03/03/2026 - Defensive try/catch + fix splash hide on error
 // ******************************************************************************************
 
 // --- CONFIGURATION ---
@@ -1126,7 +1126,7 @@ function getData() {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     setup(); // S'assure que tout est prêt
-    ensureVendeeVli_();
+    try { ensureVendeeVli_(); } catch(evli) { Logger.log("ERREUR ensureVendeeVli_: " + evli); }
     if (!SCRIPT_PROP.getProperty("INIT_V3_CLEANUP")) { cleanupCategories_(ss); SCRIPT_PROP.setProperty("INIT_V3_CLEANUP", "1"); }
     if (!SCRIPT_PROP.getProperty("INIT_V4_REMOVE_DEFAULTS")) { removeAutoDefaultBags_(ss); SCRIPT_PROP.setProperty("INIT_V4_REMOVE_DEFAULTS", "1"); }
     if (!SCRIPT_PROP.getProperty("INIT_V5_ORDER")) { initializeInventoryOrder_(ss); SCRIPT_PROP.setProperty("INIT_V5_ORDER", "1"); }
@@ -1184,10 +1184,17 @@ function getData() {
     const savedForms = SCRIPT_PROP.getProperty("FORMS_JSON");
     if (savedForms) forms = JSON.parse(savedForms);
     // VLI: source de vérité = constantes + overrides persistés
-    const vliBaseDates = ensureVliBaseDates_();
-    const vliForms = buildVliFormsWithBaseDates_(vliBaseDates);
-    forms["VLI 01 Chantonnay"] = vliForms["VLI 01 Chantonnay"];
-    forms["VLI 02 Les Herbiers"] = vliForms["VLI 02 Les Herbiers"];
+    try {
+      var vliBaseDates = ensureVliBaseDates_();
+      var vliForms = buildVliFormsWithBaseDates_(vliBaseDates);
+      forms["VLI 01 Chantonnay"] = vliForms["VLI 01 Chantonnay"];
+      forms["VLI 02 Les Herbiers"] = vliForms["VLI 02 Les Herbiers"];
+    } catch(vliErr) {
+      Logger.log("ERREUR VLI forms: " + vliErr);
+      var vliFallback = buildVliFormsWithBaseDates_({});
+      forms["VLI 01 Chantonnay"] = vliFallback["VLI 01 Chantonnay"];
+      forms["VLI 02 Les Herbiers"] = vliFallback["VLI 02 Les Herbiers"];
+    }
     
     // 4. Historique
     const histSheet = ss.getSheetByName(SHEET_NAMES.HISTORY);
