@@ -1,6 +1,6 @@
 // ******************************************************************************************
 // ****************************** CODE.GS (BACKEND) *****************************************
-// Version 1.9.17 - 03/03/2026 - Fix boucle récursive + dates invalides
+// Version 1.9.18 - 03/03/2026 - Fix boucle récursive + dates invalides
 // ******************************************************************************************
 
 // --- CONFIGURATION ---
@@ -15,7 +15,7 @@ const SHEET_NAMES = {
 };
 
 const VENDEE_VLI_CATEGORY = "VLI";
-const VENDEE_VLI_BAGS = ["VLI 1", "VLI 2"];
+const VENDEE_VLI_BAGS = ["VLI 01 Chantonnay", "VLI 02 Les Herbiers"];
 
 function normalizeDlu_(value) {
   if (!value && value !== 0) return "";
@@ -756,8 +756,8 @@ const VENDEE_VLI2_FORM = [
 
 // Mapping : quel formulaire pour quel sac
 const VENDEE_VLI_FORMS = {
-  "VLI 1": VENDEE_VLI1_FORM,
-  "VLI 2": VENDEE_VLI2_FORM
+  "VLI 01 Chantonnay": VENDEE_VLI1_FORM,
+  "VLI 02 Les Herbiers": VENDEE_VLI2_FORM
 };
 
 const VLI_BASE_DATES_KEY = "VLI_BASE_DATES_V1";
@@ -828,7 +828,7 @@ function setupVendeeVli_() {
   // Feuilles Contenu_* — supprimer les anciennes
   ss.getSheets().forEach(s => {
     const sn = s.getName();
-    if (sn.startsWith("Contenu ") && sn !== "Contenu VLI 1" && sn !== "Contenu VLI 2") {
+    if (sn.startsWith("Contenu ") && sn !== "Contenu VLI 01 Chantonnay" && sn !== "Contenu VLI 02 Les Herbiers") {
       ss.deleteSheet(s);
     }
   });
@@ -988,6 +988,47 @@ function ensureVendeeVli_() {
       Logger.log("Erreur ensureVendeeVli_: " + e);
     }
   }
+  // Migration V4 : renommer VLI 1 → VLI 01 Chantonnay, VLI 2 → VLI 02 Les Herbiers
+  if (!SCRIPT_PROP.getProperty("RENAME_VLI_V4")) {
+    SCRIPT_PROP.setProperty("RENAME_VLI_V4", "1");
+    try {
+      const ss = SpreadsheetApp.getActiveSpreadsheet();
+      const inv = ss.getSheetByName(SHEET_NAMES.INVENTORY);
+      if (inv) {
+        const data = inv.getDataRange().getValues();
+        const renames = {"VLI 1": "VLI 01 Chantonnay", "VLI 2": "VLI 02 Les Herbiers"};
+        for (let i = 1; i < data.length; i++) {
+          const oldName = String(data[i][1]).trim();
+          if (renames[oldName]) {
+            inv.getRange(i + 1, 2).setValue(renames[oldName]);
+            Logger.log("Renamed: " + oldName + " → " + renames[oldName]);
+          }
+        }
+      }
+      // Renommer les feuilles Contenu aussi
+      const sheetRenames = {"Contenu VLI 1": "Contenu VLI 01 Chantonnay", "Contenu VLI 2": "Contenu VLI 02 Les Herbiers"};
+      Object.keys(sheetRenames).forEach(old => {
+        const sh = ss.getSheetByName(old);
+        if (sh) { sh.setName(sheetRenames[old]); Logger.log("Sheet renamed: " + old + " → " + sheetRenames[old]); }
+      });
+      // Migrer VLI_BASE_DATES clés
+      try {
+        const raw = SCRIPT_PROP.getProperty(VLI_BASE_DATES_KEY);
+        if (raw) {
+          const base = JSON.parse(raw);
+          let changed = false;
+          Object.keys(renames).forEach(old => {
+            if (base[old]) { base[renames[old]] = base[old]; delete base[old]; changed = true; }
+          });
+          if (changed) SCRIPT_PROP.setProperty(VLI_BASE_DATES_KEY, JSON.stringify(base));
+        }
+      } catch(e) { Logger.log("Erreur migration VLI_BASE_DATES: " + e); }
+      Logger.log("V4: VLI renommées avec succès");
+    } catch(e) {
+      SCRIPT_PROP.deleteProperty("RENAME_VLI_V4");
+      Logger.log("Erreur migration V4: " + e);
+    }
+  }
 }
 
 // Reconstruit les feuilles Contenu VLI avec les DLU du code (sans toucher Inventaire/Config)
@@ -1079,8 +1120,8 @@ function getData() {
     // VLI: source de vérité = constantes + overrides persistés
     const vliBaseDates = ensureVliBaseDates_();
     const vliForms = buildVliFormsWithBaseDates_(vliBaseDates);
-    forms["VLI 1"] = vliForms["VLI 1"];
-    forms["VLI 2"] = vliForms["VLI 2"];
+    forms["VLI 01 Chantonnay"] = vliForms["VLI 01 Chantonnay"];
+    forms["VLI 02 Les Herbiers"] = vliForms["VLI 02 Les Herbiers"];
     
     // 4. Historique
     const histSheet = ss.getSheetByName(SHEET_NAMES.HISTORY);
