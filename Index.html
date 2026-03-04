@@ -226,7 +226,7 @@
         <p id="tech-error">Le serveur ne répond pas.</p>
         <button class="header-btn" style="background:#d32f2f; margin: 0 auto;" onclick="forceReload()">🔄 Recharger l'application</button>
       </div>
-      <div style="font-size:0.65em; color:#bbb; margin-top:12px;">v1.9.30</div>
+      <div style="font-size:0.65em; color:#bbb; margin-top:12px;">v1.9.31</div>
     </div>
 
     <div class="top-header">
@@ -2024,33 +2024,34 @@
       }
 
       function exportInterventionsExcel() {
-        const list = (INTERVENTIONS_CACHE || []).slice();
-        if (!list.length) {
-          alert('Aucune intervention à exporter.');
-          return;
-        }
+        google.script.run
+          .withSuccessHandler(function(res) {
+            if (!res || !res.success || !res.base64) {
+              alert('Erreur export Excel: ' + (res && res.error ? res.error : 'réponse invalide'));
+              return;
+            }
 
-        const header = ['Date','ISP','CIS','Commune','N° intervention','VLI','Horodatage'];
-        const rows = [header.join(';')];
+            const bin = atob(res.base64);
+            const len = bin.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) bytes[i] = bin.charCodeAt(i);
 
-        list.forEach(r => {
-          const vals = [r.date, r.isp, r.cis, r.commune, r.numInter, r.vli, r.horodatage].map(v => {
-            const s = String(v || '').replace(/"/g, '""');
-            return '"' + s + '"';
-          });
-          rows.push(vals.join(';'));
-        });
+            const blob = new Blob([bytes], {
+              type: res.mimeType || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            });
 
-        const csv = '\uFEFF' + rows.join('\n');
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        const stamp = new Date().toISOString().slice(0,19).replace(/[T:]/g,'-');
-        a.download = 'interventions_vli_' + stamp + '.csv';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(a.href);
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = res.fileName || ('interventions_vli_' + new Date().toISOString().slice(0,19).replace(/[T:]/g,'-') + '.xlsx');
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(a.href);
+          })
+          .withFailureHandler(function(err) {
+            alert('Erreur export Excel: ' + (err && err.message ? err.message : err));
+          })
+          .exportVliInterventionsXlsx();
       }
 
       function renderInterventionsTab() {
@@ -2163,6 +2164,6 @@
         }).updateVliImpactComment(fileId, c);
       }
     </script>
-    <div style="text-align:center; padding:8px; font-size:0.7em; color:#aaa;">v1.9.30 — 04/03/2026</div>
+    <div style="text-align:center; padding:8px; font-size:0.7em; color:#aaa;">v1.9.31 — 04/03/2026</div>
   </body>
 </html>

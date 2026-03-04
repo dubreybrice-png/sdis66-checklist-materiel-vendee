@@ -1,6 +1,6 @@
 // ******************************************************************************************
 // ****************************** CODE.GS (BACKEND) *****************************************
-// Version 1.9.30 - 04/03/2026 - Interventions: export Excel CSV + tri colonnes + stats CIS/commune/date/semaine/mois
+// Version 1.9.31 - 04/03/2026 - Export interventions en vrai .xlsx
 // ******************************************************************************************
 
 // --- CONFIGURATION ---
@@ -2475,6 +2475,67 @@ function getVliInterventions() {
   } catch (e) {
     Logger.log("Erreur getVliInterventions: " + e);
     return [];
+  }
+}
+
+function exportVliInterventionsXlsx() {
+  try {
+    const rows = getVliInterventions();
+    if (!rows || !rows.length) return { success: false, error: "Aucune intervention à exporter." };
+
+    const tz = Session.getScriptTimeZone();
+    const stamp = Utilities.formatDate(new Date(), tz, "yyyy-MM-dd_HH-mm-ss");
+    const fileName = "interventions_vli_" + stamp + ".xlsx";
+
+    const tempSs = SpreadsheetApp.create("TMP_" + fileName.replace(".xlsx", ""));
+    const tempId = tempSs.getId();
+    const sh = tempSs.getSheets()[0];
+    sh.setName("Interventions VLI");
+
+    const values = [["Date", "ISP", "CIS", "Commune", "N_Inter", "VLI", "Horodatage"]];
+    rows.forEach(function(r) {
+      values.push([
+        r.date || "",
+        r.isp || "",
+        r.cis || "",
+        r.commune || "",
+        r.numInter || "",
+        r.vli || "",
+        r.horodatage || ""
+      ]);
+    });
+
+    sh.getRange(1, 1, values.length, values[0].length).setValues(values);
+    sh.setFrozenRows(1);
+    for (var c = 1; c <= 7; c++) sh.autoResizeColumn(c);
+    SpreadsheetApp.flush();
+
+    const exportUrl = "https://www.googleapis.com/drive/v3/files/" + tempId + "/export?mimeType=" +
+      encodeURIComponent("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    const resp = UrlFetchApp.fetch(exportUrl, {
+      headers: { Authorization: "Bearer " + ScriptApp.getOAuthToken() },
+      muteHttpExceptions: true
+    });
+
+    if (resp.getResponseCode() !== 200) {
+      try { DriveApp.getFileById(tempId).setTrashed(true); } catch (_) {}
+      return { success: false, error: "Export XLSX impossible (HTTP " + resp.getResponseCode() + ")" };
+    }
+
+    const bytes = resp.getBlob().getBytes();
+    const base64 = Utilities.base64Encode(bytes);
+
+    try { DriveApp.getFileById(tempId).setTrashed(true); } catch (_) {}
+
+    return {
+      success: true,
+      fileName: fileName,
+      mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      base64: base64
+    };
+  } catch (e) {
+    Logger.log("Erreur exportVliInterventionsXlsx: " + e);
+    return { success: false, error: e.toString() };
   }
 }
 
