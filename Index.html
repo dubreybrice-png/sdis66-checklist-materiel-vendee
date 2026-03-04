@@ -226,7 +226,7 @@
         <p id="tech-error">Le serveur ne répond pas.</p>
         <button class="header-btn" style="background:#d32f2f; margin: 0 auto;" onclick="forceReload()">🔄 Recharger l'application</button>
       </div>
-      <div style="font-size:0.65em; color:#bbb; margin-top:12px;">v1.9.31</div>
+      <div style="font-size:0.65em; color:#bbb; margin-top:12px;">v1.9.32</div>
     </div>
 
     <div class="top-header">
@@ -2026,8 +2026,24 @@
       function exportInterventionsExcel() {
         google.script.run
           .withSuccessHandler(function(res) {
-            if (!res || !res.success || !res.base64) {
+            if (!res || !res.success) {
               alert('Erreur export Excel: ' + (res && res.error ? res.error : 'réponse invalide'));
+              return;
+            }
+
+            if (res.url) {
+              const a = document.createElement('a');
+              a.href = res.url;
+              a.target = '_blank';
+              a.rel = 'noopener';
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              return;
+            }
+
+            if (!res.base64) {
+              alert('Erreur export Excel: réponse invalide');
               return;
             }
 
@@ -2164,6 +2180,6 @@
         }).updateVliImpactComment(fileId, c);
       }
     </script>
-    <div style="text-align:center; padding:8px; font-size:0.7em; color:#aaa;">v1.9.31 — 04/03/2026</div>
+    <div style="text-align:center; padding:8px; font-size:0.7em; color:#aaa;">v1.9.32 — 04/03/2026</div>
   </body>
 </html>

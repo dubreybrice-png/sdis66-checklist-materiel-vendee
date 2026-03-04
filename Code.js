@@ -1,6 +1,6 @@
 // ******************************************************************************************
 // ****************************** CODE.GS (BACKEND) *****************************************
-// Version 1.9.31 - 04/03/2026 - Export interventions en vrai .xlsx
+// Version 1.9.32 - 04/03/2026 - Export .xlsx sans UrlFetch (URL directe)
 // ******************************************************************************************
 
 // --- CONFIGURATION ---
@@ -2510,28 +2510,11 @@ function exportVliInterventionsXlsx() {
     for (var c = 1; c <= 7; c++) sh.autoResizeColumn(c);
     SpreadsheetApp.flush();
 
-    const exportUrl = "https://www.googleapis.com/drive/v3/files/" + tempId + "/export?mimeType=" +
-      encodeURIComponent("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-    const resp = UrlFetchApp.fetch(exportUrl, {
-      headers: { Authorization: "Bearer " + ScriptApp.getOAuthToken() },
-      muteHttpExceptions: true
-    });
-
-    if (resp.getResponseCode() !== 200) {
-      try { DriveApp.getFileById(tempId).setTrashed(true); } catch (_) {}
-      return { success: false, error: "Export XLSX impossible (HTTP " + resp.getResponseCode() + ")" };
-    }
-
-    const bytes = resp.getBlob().getBytes();
-    const base64 = Utilities.base64Encode(bytes);
-
-    try { DriveApp.getFileById(tempId).setTrashed(true); } catch (_) {}
-
     return {
       success: true,
       fileName: fileName,
-      mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      base64: base64
+      fileId: tempId,
+      url: "https://docs.google.com/spreadsheets/d/" + tempId + "/export?format=xlsx"
     };
   } catch (e) {
     Logger.log("Erreur exportVliInterventionsXlsx: " + e);
