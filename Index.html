@@ -226,7 +226,7 @@
         <p id="tech-error">Le serveur ne répond pas.</p>
         <button class="header-btn" style="background:#d32f2f; margin: 0 auto;" onclick="forceReload()">🔄 Recharger l'application</button>
       </div>
-      <div style="font-size:0.65em; color:#bbb; margin-top:12px;">v1.9.29</div>
+      <div style="font-size:0.65em; color:#bbb; margin-top:12px;">v1.9.30</div>
     </div>
 
     <div class="top-header">
@@ -452,19 +452,20 @@
           <div style="margin-bottom:15px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
             <button class="admin-btn" onclick="openInterventionModal()" style="background:linear-gradient(135deg,#1976d2,#1565c0); color:#fff;">+ Nouvelle intervention</button>
             <button class="admin-btn secondary" onclick="renderInterventionsTab()" style="margin-left:8px;">🔄 Rafraîchir</button>
+            <button class="admin-btn success" onclick="exportInterventionsExcel()">📥 Export Excel</button>
             <div id="interventions-stat" style="margin-left:auto; background:linear-gradient(135deg,#e3f2fd,#bbdefb); padding:8px 16px; border-radius:20px; font-weight:600; color:#1565c0; font-size:0.95em; display:none;">🚑 0 intervention(s)</div>
           </div>
           <div style="overflow-x:auto;">
             <table style="width:100%; border-collapse:collapse; font-size:0.92em;">
               <thead>
                 <tr style="background:var(--section-bg); border-bottom:2px solid #1976d2;">
-                  <th style="padding:10px; text-align:left;">Date</th>
-                  <th style="padding:10px; text-align:left;">ISP</th>
-                  <th style="padding:10px; text-align:left;">CIS</th>
-                  <th style="padding:10px; text-align:left;">Commune</th>
-                  <th style="padding:10px; text-align:left;">N° d'inter</th>
-                  <th style="padding:10px; text-align:left;">VLI</th>
-                  <th style="padding:10px; text-align:left;">Horodatage</th>
+                  <th onclick="sortInterventionsBy('date')" style="padding:10px; text-align:left; cursor:pointer; user-select:none;">Date <span id="sort-date"></span></th>
+                  <th onclick="sortInterventionsBy('isp')" style="padding:10px; text-align:left; cursor:pointer; user-select:none;">ISP <span id="sort-isp"></span></th>
+                  <th onclick="sortInterventionsBy('cis')" style="padding:10px; text-align:left; cursor:pointer; user-select:none;">CIS <span id="sort-cis"></span></th>
+                  <th onclick="sortInterventionsBy('commune')" style="padding:10px; text-align:left; cursor:pointer; user-select:none;">Commune <span id="sort-commune"></span></th>
+                  <th onclick="sortInterventionsBy('numInter')" style="padding:10px; text-align:left; cursor:pointer; user-select:none;">N° d'inter <span id="sort-numInter"></span></th>
+                  <th onclick="sortInterventionsBy('vli')" style="padding:10px; text-align:left; cursor:pointer; user-select:none;">VLI <span id="sort-vli"></span></th>
+                  <th onclick="sortInterventionsBy('horodatage')" style="padding:10px; text-align:left; cursor:pointer; user-select:none;">Horodatage <span id="sort-horodatage"></span></th>
                   <th style="padding:10px; text-align:center; width:50px;">🗑️</th>
                 </tr>
               </thead>
@@ -472,6 +473,10 @@
                 <tr><td colspan="8" style="text-align:center; padding:20px; color:#999;">Cliquez sur "Rafraîchir" pour charger les données.</td></tr>
               </tbody>
             </table>
+          </div>
+          <div id="interventions-stats-box" style="margin-top:18px; padding:12px; background:var(--section-bg); border:1px solid var(--border-color); border-radius:8px; color:var(--text-color);">
+            <h4 style="margin:0 0 10px 0; color:#1565c0;">📊 Statistiques interventions</h4>
+            <div id="interventions-stats-content" style="font-size:0.9em; color:#777;">Chargez les interventions pour afficher les statistiques.</div>
           </div>
         </div>
       </div>
@@ -1860,38 +1865,216 @@
           .saveVliIntervention(data);
       }
 
+      let INTERVENTIONS_CACHE = [];
+      let INTERVENTIONS_SORT = { key: 'horodatage', dir: 'desc' };
+
+      function parseFrDate_(s) {
+        if (!s) return null;
+        const m = String(s).match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?$/);
+        if (!m) return null;
+        return new Date(
+          Number(m[3]),
+          Number(m[2]) - 1,
+          Number(m[1]),
+          Number(m[4] || 0),
+          Number(m[5] || 0),
+          Number(m[6] || 0)
+        );
+      }
+
+      function getWeekKey_(dateObj) {
+        const d = new Date(Date.UTC(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate()));
+        const dayNum = d.getUTCDay() || 7;
+        d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+        const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+        const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+        return d.getUTCFullYear() + '-S' + String(weekNo).padStart(2, '0');
+      }
+
+      function updateInterventionsSortIcons() {
+        ['date','isp','cis','commune','numInter','vli','horodatage'].forEach(k => {
+          const el = document.getElementById('sort-' + k);
+          if (!el) return;
+          if (INTERVENTIONS_SORT.key === k) el.textContent = INTERVENTIONS_SORT.dir === 'asc' ? '▲' : '▼';
+          else el.textContent = '';
+        });
+      }
+
+      function sortInterventionsBy(key) {
+        if (INTERVENTIONS_SORT.key === key) INTERVENTIONS_SORT.dir = INTERVENTIONS_SORT.dir === 'asc' ? 'desc' : 'asc';
+        else {
+          INTERVENTIONS_SORT.key = key;
+          INTERVENTIONS_SORT.dir = (key === 'date' || key === 'horodatage') ? 'desc' : 'asc';
+        }
+        renderInterventionsTable();
+      }
+
+      function renderInterventionsTable() {
+        const body = document.getElementById('interventions-body');
+        if (!body) return;
+
+        updateInterventionsSortIcons();
+
+        const list = (INTERVENTIONS_CACHE || []).slice();
+        const key = INTERVENTIONS_SORT.key;
+        const dir = INTERVENTIONS_SORT.dir === 'asc' ? 1 : -1;
+
+        list.sort((a, b) => {
+          let av = a[key] || '';
+          let bv = b[key] || '';
+
+          if (key === 'date' || key === 'horodatage') {
+            const ad = parseFrDate_(av);
+            const bd = parseFrDate_(bv);
+            const at = ad ? ad.getTime() : -8640000000000000;
+            const bt = bd ? bd.getTime() : -8640000000000000;
+            return (at - bt) * dir;
+          }
+
+          av = String(av).toLowerCase();
+          bv = String(bv).toLowerCase();
+          return av.localeCompare(bv, 'fr') * dir;
+        });
+
+        if (list.length === 0) {
+          body.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px; color:#999;">Aucune intervention enregistrée.</td></tr>';
+          return;
+        }
+
+        let html = '';
+        list.forEach(r => {
+          html += `<tr style="border-bottom:1px solid var(--border-color);">
+            <td style="padding:8px 10px;">${r.date || ''}</td>
+            <td style="padding:8px 10px;">${r.isp || ''}</td>
+            <td style="padding:8px 10px;">${r.cis || ''}</td>
+            <td style="padding:8px 10px;">${r.commune || ''}</td>
+            <td style="padding:8px 10px;">${r.numInter || ''}</td>
+            <td style="padding:8px 10px;">${r.vli || ''}</td>
+            <td style="padding:8px 10px; font-size:0.85em; color:#999;">${r.horodatage || ''}</td>
+            <td style="padding:8px 10px; text-align:center;"><button onclick="deleteIntervention(${r.rowIndex})" title="Supprimer" style="background:none; border:none; cursor:pointer; font-size:1.2em; color:#c62828; padding:2px 6px; border-radius:4px; transition:background .2s;" onmouseover="this.style.background='#ffebee'" onmouseout="this.style.background='none'">✕</button></td>
+          </tr>`;
+        });
+        body.innerHTML = html;
+      }
+
+      function renderInterventionsStats() {
+        const box = document.getElementById('interventions-stats-content');
+        if (!box) return;
+        const list = INTERVENTIONS_CACHE || [];
+        if (!list.length) {
+          box.innerHTML = '<span style="color:#999;">Aucune intervention pour les statistiques.</span>';
+          return;
+        }
+
+        const byCis = {};
+        const byCommune = {};
+        const byDate = {};
+        const byWeek = {};
+        const byMonth = {};
+
+        list.forEach(r => {
+          const cis = (r.cis || 'Non renseigné').trim() || 'Non renseigné';
+          const commune = (r.commune || 'Non renseignée').trim() || 'Non renseignée';
+          const date = (r.date || 'Non renseignée').trim() || 'Non renseignée';
+
+          byCis[cis] = (byCis[cis] || 0) + 1;
+          byCommune[commune] = (byCommune[commune] || 0) + 1;
+          byDate[date] = (byDate[date] || 0) + 1;
+
+          const d = parseFrDate_(r.date || '') || parseFrDate_(r.horodatage || '');
+          if (d) {
+            const wk = getWeekKey_(d);
+            const mk = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+            byWeek[wk] = (byWeek[wk] || 0) + 1;
+            byMonth[mk] = (byMonth[mk] || 0) + 1;
+          }
+        });
+
+        function topRows(obj, sortByKey) {
+          const entries = Object.entries(obj);
+          entries.sort((a, b) => sortByKey ? String(a[0]).localeCompare(String(b[0]), 'fr') : b[1] - a[1]);
+          return entries;
+        }
+
+        function tableHtml(title, entries) {
+          let h = '<div style="background:var(--card-bg); border:1px solid var(--border-color); border-radius:6px; overflow:hidden;">';
+          h += '<div style="padding:8px 10px; font-weight:700; background:var(--section-bg);">' + title + '</div>';
+          h += '<table style="width:100%; border-collapse:collapse; font-size:0.9em;">';
+          entries.forEach(e => {
+            h += '<tr><td style="padding:6px 10px; border-bottom:1px solid var(--border-color);">' + e[0] + '</td><td style="padding:6px 10px; border-bottom:1px solid var(--border-color); text-align:right; font-weight:700;">' + e[1] + '</td></tr>';
+          });
+          h += '</table></div>';
+          return h;
+        }
+
+        const cisRows = topRows(byCis, false);
+        const communeRows = topRows(byCommune, false);
+        const dateRows = topRows(byDate, true);
+        const weekRows = topRows(byWeek, true);
+        const monthRows = topRows(byMonth, true);
+
+        box.innerHTML =
+          '<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:10px;">' +
+          tableHtml('Par CIS', cisRows) +
+          tableHtml('Par commune', communeRows) +
+          tableHtml('Par date', dateRows) +
+          tableHtml('Par semaine', weekRows) +
+          tableHtml('Par mois', monthRows) +
+          '</div>';
+      }
+
+      function exportInterventionsExcel() {
+        const list = (INTERVENTIONS_CACHE || []).slice();
+        if (!list.length) {
+          alert('Aucune intervention à exporter.');
+          return;
+        }
+
+        const header = ['Date','ISP','CIS','Commune','N° intervention','VLI','Horodatage'];
+        const rows = [header.join(';')];
+
+        list.forEach(r => {
+          const vals = [r.date, r.isp, r.cis, r.commune, r.numInter, r.vli, r.horodatage].map(v => {
+            const s = String(v || '').replace(/"/g, '""');
+            return '"' + s + '"';
+          });
+          rows.push(vals.join(';'));
+        });
+
+        const csv = '\uFEFF' + rows.join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        const stamp = new Date().toISOString().slice(0,19).replace(/[T:]/g,'-');
+        a.download = 'interventions_vli_' + stamp + '.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+      }
+
       function renderInterventionsTab() {
         const body = document.getElementById('interventions-body');
         const stat = document.getElementById('interventions-stat');
         if (!body) return;
         body.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px;">⏳ Chargement...</td></tr>';
         if (stat) { stat.style.display = 'none'; }
+
         google.script.run.withSuccessHandler(list => {
+          INTERVENTIONS_CACHE = Array.isArray(list) ? list : [];
+
           if (stat) {
             stat.style.display = 'inline-block';
-            var n = list ? list.length : 0;
+            var n = INTERVENTIONS_CACHE.length;
             stat.textContent = '🚑 ' + n + ' intervention' + (n > 1 ? 's' : '');
           }
-          if (!list || list.length === 0) {
-            body.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px; color:#999;">Aucune intervention enregistrée.</td></tr>';
-            return;
-          }
-          let html = '';
-          list.forEach(r => {
-            html += `<tr style="border-bottom:1px solid var(--border-color);">
-              <td style="padding:8px 10px;">${r.date || ''}</td>
-              <td style="padding:8px 10px;">${r.isp || ''}</td>
-              <td style="padding:8px 10px;">${r.cis || ''}</td>
-              <td style="padding:8px 10px;">${r.commune || ''}</td>
-              <td style="padding:8px 10px;">${r.numInter || ''}</td>
-              <td style="padding:8px 10px;">${r.vli || ''}</td>
-              <td style="padding:8px 10px; font-size:0.85em; color:#999;">${r.horodatage || ''}</td>
-              <td style="padding:8px 10px; text-align:center;"><button onclick="deleteIntervention(${r.rowIndex})" title="Supprimer" style="background:none; border:none; cursor:pointer; font-size:1.2em; color:#c62828; padding:2px 6px; border-radius:4px; transition:background .2s;" onmouseover="this.style.background='#ffebee'" onmouseout="this.style.background='none'">✕</button></td>
-            </tr>`;
-          });
-          body.innerHTML = html;
+
+          renderInterventionsTable();
+          renderInterventionsStats();
         }).withFailureHandler(err => {
           body.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px; color:#c62828;">Erreur: ' + err + '</td></tr>';
+          const stats = document.getElementById('interventions-stats-content');
+          if (stats) stats.innerHTML = '<span style="color:#c62828;">Erreur de chargement statistiques.</span>';
         }).getVliInterventions();
       }
 
@@ -1980,6 +2163,6 @@
         }).updateVliImpactComment(fileId, c);
       }
     </script>
-    <div style="text-align:center; padding:8px; font-size:0.7em; color:#aaa;">v1.9.29 — 03/03/2026</div>
+    <div style="text-align:center; padding:8px; font-size:0.7em; color:#aaa;">v1.9.30 — 04/03/2026</div>
   </body>
 </html>

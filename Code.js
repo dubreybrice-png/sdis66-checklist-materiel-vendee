@@ -1,6 +1,6 @@
 // ******************************************************************************************
 // ****************************** CODE.GS (BACKEND) *****************************************
-// Version 1.9.29 - 03/03/2026 - Fix QR JS parsing corruption (remove template literals around src/https)
+// Version 1.9.30 - 04/03/2026 - Interventions: export Excel CSV + tri colonnes + stats CIS/commune/date/semaine/mois
 // ******************************************************************************************
 
 // --- CONFIGURATION ---
