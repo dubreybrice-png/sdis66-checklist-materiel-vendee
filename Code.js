@@ -1,6 +1,6 @@
 // ******************************************************************************************
 // ****************************** CODE.GS (BACKEND) *****************************************
-// Version 1.9.32 - 04/03/2026 - Export .xlsx sans UrlFetch (URL directe)
+// Version 1.9.33 - 04/03/2026 - CIS intervention en liste déroulante + validation stricte
 // ******************************************************************************************
 
 // --- CONFIGURATION ---
@@ -16,6 +16,30 @@ const SHEET_NAMES = {
 
 const VENDEE_VLI_CATEGORY = "VLI";
 const VENDEE_VLI_BAGS = ["VLI 01 Chantonnay", "VLI 02 Les Herbiers"];
+const ALLOWED_INTERVENTION_CIS = [
+  "AIZENAY","APREMONT","AVRILLE","BARBATRE","BEAUREPAIRE","BEAUVOIR SUR MER","BENET","BOUIN","BREM SUR MER",
+  "CHAILLE LES MARAIS","CHAMPAGNE LES MARAIS","CHANTONNAY","CHAVAGNES EN PAILLERS","COEX","DAMVIX","JARD SUR MER",
+  "LA BRUFFIERE","LA CAILLERE SAINT HILAIRE","LA CHÂTAIGNERAIE","LA GARNACHE","LA MOTHE ACHARD","LA ROCHE SUR YON",
+  "LA TRANCHE SUR MER","LA VERRIE","LE POIRE SUR VIE","LES BROUZILS","LES ESSARTS","LES HERBIERS","LES LUCS SUR BOULOGNE",
+  "LES SABLES D'OLONNE","L'HERMENAULT","L'ILE D'YEU","LONGEVILLE SUR MER","MAILLEZAIS","MAREUIL SUR LAY","MONTAIGU",
+  "MOUCHAMPS","MOUILLERON EN PAREDS","MOUTIERS LES MAUXFAITS","NIEUL LE DOLENT","NOIRMOUTIER EN L'ILE","POUZAUGES",
+  "ROCHESERVIÈRE","SAINT DENIS LA CHEVASSE","SAINT ETIENNE DU BOIS","SAINT FLORENT DES BOIS","SAINT FULGENT",
+  "SAINT GILLES CROIX DE VIE","SAINT JEAN DE MONTS","SAINT LAURENT SUR SEVRE","SAINTE CECILE","SAINTE HERMINE",
+  "TALMONT SAINT HILAIRE","VIX","XANTON-CHASSENON"
+];
+const ALLOWED_INTERVENTION_CIS_SET = ALLOWED_INTERVENTION_CIS.reduce(function(acc, cis) {
+  acc[cis] = true;
+  return acc;
+}, {});
+
+function normalizeInterventionCis_(value) {
+  return String(value || "")
+    .replace(/[’`´]/g, "'")
+    .replace(/[‐‑–—]/g, "-")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toUpperCase();
+}
 
 function normalizeDlu_(value) {
   if (!value && value !== 0) return "";
@@ -2436,6 +2460,10 @@ function saveVliIntervention(data) {
     if (!data || !data.date || !data.isp || !data.cis || !data.commune || !data.numInter || !data.vli) {
       return { success: false, error: "Tous les champs sont obligatoires." };
     }
+    var cis = normalizeInterventionCis_(data.cis);
+    if (!ALLOWED_INTERVENTION_CIS_SET[cis]) {
+      return { success: false, error: "CIS invalide. Sélectionnez un CIS de la liste." };
+    }
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = ss.getSheetByName(INTERVENTIONS_SHEET);
     if (!sheet) {
@@ -2444,7 +2472,7 @@ function saveVliIntervention(data) {
       sheet.setFrozenRows(1);
     }
     var horodatage = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm:ss");
-    sheet.appendRow([data.date, data.isp, data.cis, data.commune, data.numInter, data.vli, horodatage]);
+    sheet.appendRow([data.date, data.isp, cis, data.commune, data.numInter, data.vli, horodatage]);
     return { success: true };
   } catch (e) {
     Logger.log("Erreur saveVliIntervention: " + e.toString());

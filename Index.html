@@ -226,7 +226,7 @@
         <p id="tech-error">Le serveur ne répond pas.</p>
         <button class="header-btn" style="background:#d32f2f; margin: 0 auto;" onclick="forceReload()">🔄 Recharger l'application</button>
       </div>
-      <div style="font-size:0.65em; color:#bbb; margin-top:12px;">v1.9.32</div>
+      <div style="font-size:0.65em; color:#bbb; margin-top:12px;">v1.9.33</div>
     </div>
 
     <div class="top-header">
@@ -591,7 +591,9 @@
           </div>
           <div style="margin-bottom:14px;">
             <label style="font-weight:600; display:block; margin-bottom:4px;">CIS *</label>
-            <input type="text" id="inter-cis" required placeholder="Centre d'incendie et de secours" style="width:100%; padding:10px; border:1px solid var(--border-color); border-radius:6px; background:var(--input-bg); color:var(--input-text); font-size:1em;">
+            <select id="inter-cis" required style="width:100%; padding:10px; border:1px solid var(--border-color); border-radius:6px; background:var(--input-bg); color:var(--input-text); font-size:1em;">
+              <option value="">-- Sélectionner un CIS --</option>
+            </select>
           </div>
           <div style="margin-bottom:14px;">
             <label style="font-weight:600; display:block; margin-bottom:4px;">Commune d'intervention *</label>
@@ -1818,7 +1820,32 @@
       let CURR_VLI_NAME = '';
       
       // ====== INTERVENTION VLI ======
+      const INTERVENTION_CIS_LIST = [
+        'AIZENAY','APREMONT','AVRILLE','BARBATRE','BEAUREPAIRE','BEAUVOIR SUR MER','BENET','BOUIN','BREM SUR MER',
+        'CHAILLE LES MARAIS','CHAMPAGNE LES MARAIS','CHANTONNAY','CHAVAGNES EN PAILLERS','COEX','DAMVIX','JARD SUR MER',
+        'LA BRUFFIERE','LA CAILLERE SAINT HILAIRE','LA CHÂTAIGNERAIE','LA GARNACHE','LA MOTHE ACHARD','LA ROCHE SUR YON',
+        'LA TRANCHE SUR MER','LA VERRIE','LE POIRE SUR VIE','LES BROUZILS','LES ESSARTS','LES HERBIERS','LES LUCS SUR BOULOGNE',
+        "LES SABLES D'OLONNE","L'HERMENAULT","L'ILE D'YEU",'LONGEVILLE SUR MER','MAILLEZAIS','MAREUIL SUR LAY','MONTAIGU',
+        'MOUCHAMPS','MOUILLERON EN PAREDS','MOUTIERS LES MAUXFAITS','NIEUL LE DOLENT',"NOIRMOUTIER EN L'ILE",'POUZAUGES',
+        'ROCHESERVIÈRE','SAINT DENIS LA CHEVASSE','SAINT ETIENNE DU BOIS','SAINT FLORENT DES BOIS','SAINT FULGENT',
+        'SAINT GILLES CROIX DE VIE','SAINT JEAN DE MONTS','SAINT LAURENT SUR SEVRE','SAINTE CECILE','SAINTE HERMINE',
+        'TALMONT SAINT HILAIRE','VIX','XANTON-CHASSENON'
+      ];
+
+      function fillInterventionCisSelect() {
+        const select = document.getElementById('inter-cis');
+        if (!select) return;
+        if (select.options.length > 1) return;
+        INTERVENTION_CIS_LIST.forEach(function(cis) {
+          const opt = document.createElement('option');
+          opt.value = cis;
+          opt.textContent = cis;
+          select.appendChild(opt);
+        });
+      }
+
       function openInterventionModal() {
+        fillInterventionCisSelect();
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('inter-date').value = today;
         document.getElementById('inter-isp').value = '';
@@ -2180,6 +2207,6 @@
         }).updateVliImpactComment(fileId, c);
       }
     </script>
-    <div style="text-align:center; padding:8px; font-size:0.7em; color:#aaa;">v1.9.32 — 04/03/2026</div>
+    <div style="text-align:center; padding:8px; font-size:0.7em; color:#aaa;">v1.9.33 — 04/03/2026</div>
   </body>
 </html>
