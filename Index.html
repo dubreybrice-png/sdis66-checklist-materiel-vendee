@@ -226,7 +226,7 @@
         <p id="tech-error">Le serveur ne répond pas.</p>
         <button class="header-btn" style="background:#d32f2f; margin: 0 auto;" onclick="forceReload()">🔄 Recharger l'application</button>
       </div>
-      <div style="font-size:0.65em; color:#bbb; margin-top:12px;">v1.9.33</div>
+      <div style="font-size:0.65em; color:#bbb; margin-top:12px;">v1.9.34</div>
     </div>
 
     <div class="top-header">
@@ -452,7 +452,7 @@
           <div style="margin-bottom:15px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
             <button class="admin-btn" onclick="openInterventionModal()" style="background:linear-gradient(135deg,#1976d2,#1565c0); color:#fff;">+ Nouvelle intervention</button>
             <button class="admin-btn secondary" onclick="renderInterventionsTab()" style="margin-left:8px;">🔄 Rafraîchir</button>
-            <button class="admin-btn success" onclick="exportInterventionsExcel()">📥 Export Excel</button>
+            <button class="admin-btn success" onclick="exportInterventionsExcel()">📥 Export Excel (CSV)</button>
             <div id="interventions-stat" style="margin-left:auto; background:linear-gradient(135deg,#e3f2fd,#bbdefb); padding:8px 16px; border-radius:20px; font-weight:600; color:#1565c0; font-size:0.95em; display:none;">🚑 0 intervention(s)</div>
           </div>
           <div style="overflow-x:auto;">
@@ -2051,50 +2051,43 @@
       }
 
       function exportInterventionsExcel() {
-        google.script.run
-          .withSuccessHandler(function(res) {
-            if (!res || !res.success) {
-              alert('Erreur export Excel: ' + (res && res.error ? res.error : 'réponse invalide'));
-              return;
-            }
+        const rows = (INTERVENTIONS_CACHE || []).slice();
+        if (!rows.length) {
+          alert('Aucune intervention à exporter.');
+          return;
+        }
 
-            if (res.url) {
-              const a = document.createElement('a');
-              a.href = res.url;
-              a.target = '_blank';
-              a.rel = 'noopener';
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
-              return;
-            }
+        function esc(v) {
+          const s = String(v == null ? '' : v);
+          return '"' + s.replace(/"/g, '""') + '"';
+        }
 
-            if (!res.base64) {
-              alert('Erreur export Excel: réponse invalide');
-              return;
-            }
+        const headers = ['Date', 'ISP', 'CIS', 'Commune', 'N_Inter', 'VLI', 'Horodatage'];
+        const lines = [headers.map(esc).join(';')];
 
-            const bin = atob(res.base64);
-            const len = bin.length;
-            const bytes = new Uint8Array(len);
-            for (let i = 0; i < len; i++) bytes[i] = bin.charCodeAt(i);
+        rows.forEach(function(r) {
+          lines.push([
+            r.date || '',
+            r.isp || '',
+            r.cis || '',
+            r.commune || '',
+            r.numInter || '',
+            r.vli || '',
+            r.horodatage || ''
+          ].map(esc).join(';'));
+        });
 
-            const blob = new Blob([bytes], {
-              type: res.mimeType || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            });
+        const stamp = new Date().toISOString().slice(0,19).replace(/[T:]/g,'-');
+        const csv = '\uFEFF' + lines.join('\r\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
 
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = res.fileName || ('interventions_vli_' + new Date().toISOString().slice(0,19).replace(/[T:]/g,'-') + '.xlsx');
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(a.href);
-          })
-          .withFailureHandler(function(err) {
-            alert('Erreur export Excel: ' + (err && err.message ? err.message : err));
-          })
-          .exportVliInterventionsXlsx();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'interventions_vli_' + stamp + '.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
       }
 
       function renderInterventionsTab() {
@@ -2207,6 +2200,6 @@
         }).updateVliImpactComment(fileId, c);
       }
     </script>
-    <div style="text-align:center; padding:8px; font-size:0.7em; color:#aaa;">v1.9.33 — 04/03/2026</div>
+    <div style="text-align:center; padding:8px; font-size:0.7em; color:#aaa;">v1.9.34 — 06/03/2026</div>
   </body>
 </html>
